@@ -234,6 +234,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     });
   };
 
+  // Intervalo entre horários (slot) - global
+  const handleUpdateInterval = (minutes: number) => {
+    onUpdateSettings({
+      ...settings,
+      workingHours: {
+        ...settings.workingHours,
+        slotIntervalMinutes: minutes
+      }
+    });
+  };
+
+  // Horário de almoço por dia
+  const handleUpdateLunch = (dayIndex: number, lunchStart: string, lunchEnd: string) => {
+    const updatedDays = settings.workingHours.workDays.map((d) =>
+      d.dayOfWeek === dayIndex ? { ...d, lunchStart, lunchEnd } : d
+    );
+    onUpdateSettings({
+      ...settings,
+      workingHours: {
+        ...settings.workingHours,
+        workDays: updatedDays
+      }
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto text-slate-900">
       <div className="bg-white border border-slate-200 rounded-3xl max-w-6xl w-full h-[92vh] flex flex-col overflow-hidden relative shadow-2xl">
@@ -699,50 +724,89 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div className="space-y-6">
                 <div>
                   <h3 className="text-base font-bold text-white">Configurar Horários de Funcionamento</h3>
-                  <p className="text-xs text-zinc-400">Defina os dias de abertura e intervalos de atendimento do salão</p>
+                  <p className="text-xs text-zinc-400">Defina os dias de abertura, o intervalo entre horários e o almoço</p>
+                </div>
+
+                {/* Intervalo entre horários (global) */}
+                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Intervalo entre horários</h4>
+                    <p className="text-xs text-zinc-400">De quanto em quanto tempo os horários são oferecidos ao cliente.</p>
+                  </div>
+                  <select
+                    value={settings.workingHours.slotIntervalMinutes || 30}
+                    onChange={(e) => handleUpdateInterval(Number(e.target.value))}
+                    className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-white text-xs"
+                  >
+                    {[10, 15, 20, 30, 40, 45, 60].map((m) => (
+                      <option key={m} value={m}>{m} minutos</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="space-y-3">
                   {settings.workingHours.workDays.map((day) => (
                     <div
                       key={day.dayOfWeek}
-                      className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                      className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col gap-3 text-xs"
                     >
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={day.isOpen}
-                          onChange={(e) =>
-                            handleUpdateWorkingDay(day.dayOfWeek, e.target.checked, day.openTime, day.closeTime)
-                          }
-                          className="w-4 h-4 rounded accent-amber-500"
-                        />
-                        <span className="font-bold text-sm text-white w-28">{day.dayName}</span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={day.isOpen}
+                            onChange={(e) =>
+                              handleUpdateWorkingDay(day.dayOfWeek, e.target.checked, day.openTime, day.closeTime)
+                            }
+                            className="w-4 h-4 rounded accent-amber-500"
+                          />
+                          <span className="font-bold text-sm text-white w-28">{day.dayName}</span>
+                        </div>
+
+                        {day.isOpen ? (
+                          <div className="flex items-center space-x-2">
+                            <span>Abre:</span>
+                            <input
+                              type="time"
+                              value={day.openTime}
+                              onChange={(e) =>
+                                handleUpdateWorkingDay(day.dayOfWeek, true, e.target.value, day.closeTime)
+                              }
+                              className="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-white"
+                            />
+                            <span>Fecha:</span>
+                            <input
+                              type="time"
+                              value={day.closeTime}
+                              onChange={(e) =>
+                                handleUpdateWorkingDay(day.dayOfWeek, true, day.openTime, e.target.value)
+                              }
+                              className="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-white"
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-rose-400 font-semibold">Fechado</span>
+                        )}
                       </div>
 
-                      {day.isOpen ? (
-                        <div className="flex items-center space-x-2">
-                          <span>Abre:</span>
+                      {day.isOpen && (
+                        <div className="flex items-center space-x-2 sm:pl-7 text-zinc-400">
+                          <span>Almoço:</span>
                           <input
                             type="time"
-                            value={day.openTime}
-                            onChange={(e) =>
-                              handleUpdateWorkingDay(day.dayOfWeek, true, e.target.value, day.closeTime)
-                            }
+                            value={day.lunchStart || ''}
+                            onChange={(e) => handleUpdateLunch(day.dayOfWeek, e.target.value, day.lunchEnd || '')}
                             className="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-white"
                           />
-                          <span>Fecha:</span>
+                          <span>às</span>
                           <input
                             type="time"
-                            value={day.closeTime}
-                            onChange={(e) =>
-                              handleUpdateWorkingDay(day.dayOfWeek, true, day.openTime, e.target.value)
-                            }
+                            value={day.lunchEnd || ''}
+                            onChange={(e) => handleUpdateLunch(day.dayOfWeek, day.lunchStart || '', e.target.value)}
                             className="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-white"
                           />
+                          <span className="text-zinc-600">(opcional)</span>
                         </div>
-                      ) : (
-                        <span className="text-rose-400 font-semibold">Fechado</span>
                       )}
                     </div>
                   ))}

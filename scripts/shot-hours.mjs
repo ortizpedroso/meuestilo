@@ -1,0 +1,16 @@
+import puppeteer from 'puppeteer-core';
+const BASE = 'http://localhost:8080/ag_salao/';
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const browser = await puppeteer.launch({ executablePath: '/usr/bin/google-chrome-stable', headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1280, height: 900 });
+await page.goto(BASE, { waitUntil: 'networkidle0' });
+await sleep(500);
+const click = (re) => page.evaluate((s) => { const rx = new RegExp(s, 'i'); const el = [...document.querySelectorAll('button')].find((b) => rx.test(b.textContent || '') && !b.disabled); if (el) el.click(); }, re);
+await click('Admin'); await sleep(400);
+await page.evaluate(() => { const i = document.querySelector('input[type="password"]'); const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set; set.call(i, 'admin123'); i.dispatchEvent(new Event('input', { bubbles: true })); });
+await click('Entrar no Painel'); await sleep(800);
+await click('Horários'); await sleep(500);
+await page.screenshot({ path: '/opt/cursor/artifacts/ag_salao_horarios_config.png' });
+await browser.close();
+console.log('screenshot salvo');

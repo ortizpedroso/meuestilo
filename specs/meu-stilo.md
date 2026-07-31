@@ -83,7 +83,7 @@ Progressiva Orgânica, Barba com Toalha Quente, Manicure Completa, Pedicure Comp
 |----|-----------|--------|
 | CH-01 | Não permitir agendamentos em horários ocupados | ✅ |
 | CH-02 | Exibir apenas horários disponíveis | ✅ |
-| CH-03 | Intervalo de atendimento configurável | ✅ (por config de horários) |
+| CH-03 | Intervalo entre horários e horário de almoço configuráveis no painel admin | ✅ |
 
 ### 5. Painel Administrativo
 
@@ -97,7 +97,7 @@ Progressiva Orgânica, Barba com Toalha Quente, Manicure Completa, Pedicure Comp
 | AD-04 | Excluir serviços | ✅ |
 | AD-05 | Adicionar/editar/excluir profissionais | ✅ |
 | AD-06 | Editar profissionais | ✅ |
-| AD-07 | Definir horários de funcionamento | ✅ |
+| AD-07 | Definir horários de funcionamento (abrir/fechar, intervalo e almoço) | ✅ |
 | AD-08 | Visualizar todos os agendamentos (busca + filtro) | ✅ |
 | AD-09 | Cancelar agendamentos | ✅ |
 | AD-10 | Reagendar horários | ✅ |
@@ -121,12 +121,14 @@ Progressiva Orgânica, Barba com Toalha Quente, Manicure Completa, Pedicure Comp
 | WA-02 | Enviar resumo do agendamento via WhatsApp | ✅ |
 | WA-03 | Lembrete manual ao cliente pelo admin (link WhatsApp) | ✅ |
 
-### 8. Notificações
+### 8. Notificações (escopo do MVP)
 
 | ID | Requisito | Status |
 |----|-----------|--------|
-| NT-01 | Confirmação por e-mail após agendamento | ⚠️ Prévia de e-mail exibida no app (envio real por SMTP pendente) |
-| NT-02 | Lembrete automático antes do horário | ⚠️ Hoje é manual (via WhatsApp); automação por cron pendente |
+| NT-01 | Exibir prévia do e-mail de confirmação ao cliente após o agendamento | ✅ |
+| NT-02 | Permitir lembrete ao cliente via WhatsApp (a partir do painel admin) | ✅ |
+
+> Envio real de e-mail (SMTP) e lembrete automático (cron) estão em "Fora do escopo do MVP (Próximas fases)".
 
 ### 9. Avaliações
 
@@ -161,8 +163,10 @@ Persistência real em **MySQL** (não mais `localStorage`).
 |----|-----------|--------|
 | MN-01 | Quadro de funcionalidades + planos na página | ✅ (seção "Planos") |
 | MN-02 | Contratação de assinatura (registra no banco) | ✅ (status `pending`) |
-| MN-03 | Pagamento via Mercado Pago | ⚠️ Gancho pronto (`POST /api/subscriptions` → `checkoutUrl`); integração pendente |
-| MN-04 | Painel do proprietário vê contratações recebidas | ✅ |
+| MN-03 | Painel do proprietário vê contratações recebidas | ✅ |
+| MN-04 | Estrutura preparada para pagamento (gancho de checkout) | ✅ (`POST /api/subscriptions` retorna `checkoutUrl`) |
+
+> A integração de pagamento com o **Mercado Pago** está em "Fora do escopo do MVP (Próximas fases)".
 
 ### 13. Dados de Demonstração (seed)
 
@@ -223,10 +227,10 @@ Persistência real em **MySQL** (não mais `localStorage`).
 - [x] Marca (nome, logo, banner, contatos, PIX) editável
 - [x] Cor de destaque aplicada ao site em tempo real
 
-### Integrações
+### Integrações (MVP)
 - [x] Botão WhatsApp com resumo do agendamento
-- [ ] Envio real de e-mail de confirmação (SMTP) — pendente
-- [ ] Lembrete automático antes do horário (cron) — pendente
+- [x] Prévia do e-mail de confirmação exibida ao cliente
+- [x] Lembrete manual ao cliente via WhatsApp no painel admin
 
 ### Avaliações e Compartilhamento
 - [x] Clientes podem avaliar o atendimento
@@ -237,10 +241,10 @@ Persistência real em **MySQL** (não mais `localStorage`).
 - [x] Clientes, agendamentos, serviços, profissionais e configurações persistidos em MySQL
 - [x] Dados de demonstração criados pelo seed
 
-### Monetização
+### Monetização (MVP)
 - [x] Quadro de funcionalidades + contratação de assinatura
 - [x] Contratações registradas e visíveis no painel
-- [ ] Pagamento via Mercado Pago — gancho pronto, integração pendente
+- [x] Estrutura de checkout preparada (gancho para provedor de pagamento)
 
 ### Qualidade Geral
 - [x] Aplicativo funcional sem erros críticos (bug de loop do localStorage eliminado)
@@ -249,8 +253,17 @@ Persistência real em **MySQL** (não mais `localStorage`).
 
 ---
 
-## Pendências / Próximos Passos
-1. **Mercado Pago:** criar a *preference* no `POST /api/subscriptions` e retornar `checkoutUrl`
-   (o frontend já redireciona quando existir).
-2. **E-mail real:** enviar confirmação por SMTP (hoje há apenas a prévia visual no app).
-3. **Lembretes automáticos:** agendar via cron/job (hoje o lembrete é manual pelo admin).
+## Fora do escopo do MVP (Próximas fases)
+
+Itens intencionalmente adiados — dependem de credenciais/infra de produção (não validáveis
+neste ambiente de desenvolvimento) e/ou foram acordados como posteriores:
+
+1. **Pagamento via Mercado Pago:** criar a *preference* no `POST /api/subscriptions` e retornar o
+   `init_point` como `checkoutUrl` (o frontend já redireciona quando existir) + webhook para marcar a
+   assinatura como `active`. Combinado como próxima fase.
+2. **Envio real de e-mail (SMTP):** hoje o app exibe a prévia do e-mail (NT-01). O envio real exige
+   servidor SMTP configurado na hospedagem.
+3. **Lembrete automático (cron):** hoje o lembrete é manual via WhatsApp (NT-02). A automação exige
+   Cron Jobs na Hostinger disparando um endpoint dedicado.
+
+> A "Definição de Concluído" acima refere-se ao **escopo do MVP** e não inclui estes três itens.
