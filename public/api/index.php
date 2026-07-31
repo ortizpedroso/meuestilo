@@ -5,8 +5,53 @@
  */
 
 require __DIR__ . '/db.php';
+require __DIR__ . '/mailer.php';
 
 ag_cors();
+
+/** Fase 1: cria uma preference de checkout no Mercado Pago. Retorna init_point ou null. */
+function ag_mp_create_preference(array $sub): ?string
+{
+    $token = ag_setting('mp_access_token', '');
+    if (!$token || !function_exists('curl_init')) {
+        return null; // sem credencial ou sem cURL -> fallback seguro
+    }
+    $base = rtrim((string) ag_setting('app_base_url', ''), '/');
+    $payload = [
+        'items' => [[
+            'title' => 'Assinatura ' . ($sub['plan'] ?? 'Pro'),
+            'quantity' => 1,
+            'currency_id' => 'BRL',
+            'unit_price' => (float) ($sub['price'] ?? 0),
+        ]],
+        'payer' => ['name' => $sub['holderName'] ?? '', 'email' => $sub['email'] ?? ''],
+        'external_reference' => $sub['id'] ?? '',
+        'back_urls' => $base ? [
+            'success' => $base . '/?assinatura=sucesso',
+            'failure' => $base . '/?assinatura=falha',
+            'pending' => $base . '/?assinatura=pendente',
+        ] : null,
+        'notification_url' => $base ? ($base . '/api/mp/webhook') : null,
+    ];
+    $payload = array_filter($payload, fn($v) => $v !== null);
+
+    $ch = curl_init('https://api.mercadopago.com/checkout/preferences');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . $token],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        CURLOPT_TIMEOUT => 15,
+    ]);
+    $res = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($res === false || $code >= 300) {
+        return null; // falha na API -> fallback seguro
+    }
+    $data = json_decode($res, true);
+    return $data['init_point'] ?? ($data['sandbox_init_point'] ?? null);
+}
 
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
 $pos = strpos($uri, '/api/');
@@ -65,6 +110,7 @@ function map_appointment(array $r): array
         'notes' => $r['notes'] ?? '',
         'status' => $r['status'],
         'createdAt' => $r['created_at'] ?? '',
+        'remindedAt' => $r['reminded_at'] ?? null,
     ];
 }
 function map_review(array $r): array
@@ -259,7 +305,17 @@ try {
                     $b['status'] ?? 'confirmed', $createdAt,
                 ]);
                 $row = $db->query('SELECT * FROM appointments WHERE id = ' . $db->quote($newId))->fetch();
-                ag_json(map_appointment($row), 201);
+                $created = map_appointment($row);
+                // Fase 2: e-mail de confirmação (não bloqueante)
+                if (!empty($created['clientEmail'])) {
+                    $settings = get_settings($db);
+                    ag_send_mail(
+                        $created['clientEmail'],
+                        'Confirmação de Agendamento ' . $created['code'] . ' - ' . ($settings['name'] ?? ''),
+                        ag_confirmation_email_html($created, $settings)
+                    );
+                }
+                ag_json($created, 201);
             }
             if ($method === 'PUT') { // bulk replace (admin: concluir/cancelar/reagendar)
                 ag_require_admin();
@@ -352,11 +408,82 @@ try {
                     $b['salonName'] ?? '', (float) ($b['price'] ?? 0), 'pending', null, $createdAt,
                 ]);
                 $row = $db->query('SELECT * FROM subscriptions WHERE id = ' . $db->quote($newId))->fetch();
-                // Gancho para Mercado Pago: aqui futuramente criaremos a "preference" e
-                // retornaremos a URL de checkout (init_point).
-                ag_json(['subscription' => map_subscription($row), 'checkoutUrl' => null], 201);
+                $sub = map_subscription($row);
+                // Fase 1: cria a preference do Mercado Pago (se houver credencial); senão, fallback.
+                $checkoutUrl = ag_mp_create_preference($sub);
+                if ($checkoutUrl) {
+                    $db->prepare('UPDATE subscriptions SET provider = ? WHERE id = ?')
+                       ->execute(['mercadopago', $sub['id']]);
+                }
+                ag_json(['subscription' => $sub, 'checkoutUrl' => $checkoutUrl], 201);
             }
             ag_json(['error' => 'Método não permitido.'], 405);
+            break;
+        }
+
+        // ---------------- MERCADO PAGO WEBHOOK (Fase 1) ----------------
+        case 'mp': {
+            // /api/mp/webhook
+            if (($segments[1] ?? '') !== 'webhook') {
+                ag_json(['error' => 'Recurso não encontrado.'], 404);
+            }
+            $token = ag_setting('mp_access_token', '');
+            $body = ag_body();
+            // Notificação pode vir por query (?type=payment&data.id=) ou body
+            $paymentId = $_GET['data.id'] ?? ($_GET['id'] ?? ($body['data']['id'] ?? null));
+            $type = $_GET['type'] ?? ($body['type'] ?? '');
+            if ($token && $paymentId && function_exists('curl_init') && ($type === 'payment' || $type === '')) {
+                $ch = curl_init('https://api.mercadopago.com/v1/payments/' . urlencode((string) $paymentId));
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
+                    CURLOPT_TIMEOUT => 15,
+                ]);
+                $res = curl_exec($ch);
+                curl_close($ch);
+                $pay = $res ? json_decode($res, true) : null;
+                if ($pay && ($pay['status'] ?? '') === 'approved') {
+                    $ref = $pay['external_reference'] ?? '';
+                    if ($ref) {
+                        $db->prepare('UPDATE subscriptions SET status = ? WHERE id = ?')
+                           ->execute(['active', $ref]);
+                    }
+                }
+            }
+            ag_json(['received' => true]);
+            break;
+        }
+
+        // ---------------- CRON: LEMBRETES (Fase 3) ----------------
+        case 'cron': {
+            if (($segments[1] ?? '') !== 'reminders') {
+                ag_json(['error' => 'Recurso não encontrado.'], 404);
+            }
+            $key = $_GET['key'] ?? '';
+            if (!hash_equals((string) ag_setting('cron_key', ''), (string) $key)) {
+                ag_json(['error' => 'Chave inválida.'], 401);
+            }
+            // Amanhã (data do servidor)
+            $tomorrow = gmdate('Y-m-d', strtotime('+1 day'));
+            $stmt = $db->prepare("SELECT * FROM appointments WHERE date = ? AND status = 'confirmed' AND (reminded_at IS NULL OR reminded_at = '')");
+            $stmt->execute([$tomorrow]);
+            $rows = $stmt->fetchAll();
+            $settings = get_settings($db);
+            $sent = 0;
+            $upd = $db->prepare('UPDATE appointments SET reminded_at = ? WHERE id = ?');
+            foreach ($rows as $r) {
+                $app = map_appointment($r);
+                if (!empty($app['clientEmail'])) {
+                    ag_send_mail(
+                        $app['clientEmail'],
+                        'Lembrete do seu horário amanhã - ' . ($settings['name'] ?? ''),
+                        ag_reminder_email_html($app, $settings)
+                    );
+                }
+                $upd->execute([gmdate('Y-m-d\TH:i:s\Z'), $app['id']]);
+                $sent++;
+            }
+            ag_json(['date' => $tomorrow, 'processed' => $sent]);
             break;
         }
 

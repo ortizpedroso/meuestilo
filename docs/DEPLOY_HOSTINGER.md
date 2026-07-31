@@ -66,6 +66,19 @@ return [
     'admin_password' => 'uma-senha-forte-do-painel',
     'auth_secret' => 'uma-string-aleatoria-bem-longa',
     'allowed_origins' => ['*'],
+
+    // Fase 1 - Mercado Pago (opcional; sem token, a contratação fica "pending")
+    'mp_access_token' => 'SEU_ACCESS_TOKEN_MP',
+    'app_base_url' => 'https://seudominio.com/ag_salao',
+
+    // Fase 2 - E-mail de confirmação
+    'mail_enabled' => true,
+    'mail_from' => 'no-reply@seudominio.com',
+    'mail_from_name' => 'Nome do Salão',
+    'mail_log' => '',
+
+    // Fase 3 - Lembretes (cron)
+    'cron_key' => 'uma-chave-secreta-para-o-cron',
 ];
 ```
 
@@ -93,12 +106,28 @@ Para começar, o **upload de arquivos** (Passos 2–4) é o caminho mais simples
 
 ---
 
-## Próximo passo (futuro): Mercado Pago
+## Fases avançadas (opcionais)
 
-A contratação de assinatura já grava a solicitação no banco (tabela `subscriptions`,
-status `pending`). A integração de pagamento está preparada: no endpoint
-`POST /api/subscriptions` (arquivo `api/index.php`) há o ponto para criar a *preference*
-do Mercado Pago e retornar a `checkoutUrl`; o frontend já redireciona para ela quando existir.
+### Fase 1 — Mercado Pago
+- Preencha `mp_access_token` (ou defina a env/secret `MP_ACCESS_TOKEN`) e `app_base_url` no `config.php`.
+- Com o token, o `POST /api/subscriptions` cria a *preference* e retorna `checkoutUrl` (o frontend
+  redireciona automaticamente). O webhook `POST /api/mp/webhook` marca a assinatura como `active`
+  quando o pagamento é aprovado — configure essa URL no painel do Mercado Pago.
+- Sem token, a contratação apenas registra a assinatura como `pending` (fallback seguro).
+
+### Fase 2 — E-mail de confirmação
+- Defina `mail_enabled => true` e `mail_from`/`mail_from_name`. Na Hostinger o envio usa `mail()` do PHP.
+- O envio é **não-bloqueante**: se falhar, o agendamento é concluído mesmo assim.
+- Para auditar o conteúdo gerado, defina `mail_log` para um caminho de arquivo (fora do `public_html`).
+
+### Fase 3 — Lembretes automáticos (Cron)
+- Defina uma `cron_key` no `config.php`.
+- No hPanel → **Cron Jobs**, agende (ex.: diariamente às 09h) o comando:
+  ```
+  curl -s "https://seudominio.com/ag_salao/api/cron/reminders?key=SUA_CRON_KEY"
+  ```
+- O endpoint envia lembrete por e-mail dos agendamentos `confirmed` do dia seguinte e marca
+  `reminded_at` (idempotente — não reenvia).
 
 ---
 

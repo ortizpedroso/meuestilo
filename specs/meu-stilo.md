@@ -253,17 +253,42 @@ Persistência real em **MySQL** (não mais `localStorage`).
 
 ---
 
-## Fora do escopo do MVP (Próximas fases)
+## Fases avançadas (pós-MVP) — implementadas
 
-Itens intencionalmente adiados — dependem de credenciais/infra de produção (não validáveis
-neste ambiente de desenvolvimento) e/ou foram acordados como posteriores:
+Estas três fases foram construídas. Itens que dependem de credenciais/infra de produção têm
+**fallback seguro** e só ficam 100% ativos quando as credenciais forem configuradas.
 
-1. **Pagamento via Mercado Pago:** criar a *preference* no `POST /api/subscriptions` e retornar o
-   `init_point` como `checkoutUrl` (o frontend já redireciona quando existir) + webhook para marcar a
-   assinatura como `active`. Combinado como próxima fase.
-2. **Envio real de e-mail (SMTP):** hoje o app exibe a prévia do e-mail (NT-01). O envio real exige
-   servidor SMTP configurado na hospedagem.
-3. **Lembrete automático (cron):** hoje o lembrete é manual via WhatsApp (NT-02). A automação exige
-   Cron Jobs na Hostinger disparando um endpoint dedicado.
+### Fase 1 — Pagamento via Mercado Pago
 
-> A "Definição de Concluído" acima refere-se ao **escopo do MVP** e não inclui estes três itens.
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| MP-01 | `POST /api/subscriptions` cria a *preference* no Mercado Pago quando o token estiver configurado | Retorna `checkoutUrl` = `init_point`; assinatura salva como `pending` | ✅ (ativo com `MP_ACCESS_TOKEN`) |
+| MP-02 | Fallback sem credencial | Sem `MP_ACCESS_TOKEN`, retorna `checkoutUrl: null` e não quebra o fluxo | ✅ (testado) |
+| MP-03 | Webhook `POST /api/mp/webhook` atualiza status | Ao receber notificação `approved`, marca assinatura como `active` | ✅ (estrutura pronta) |
+| MP-04 | Frontend redireciona ao checkout | Se `checkoutUrl` existir, o app redireciona | ✅ (já existente) |
+
+> Credencial necessária: `MP_ACCESS_TOKEN` (Secrets/`config.php`). Verificação real do checkout
+> depende dessa credencial.
+
+### Fase 2 — E-mail de confirmação
+
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| EM-01 | Enviar e-mail de confirmação ao concluir o agendamento | E-mail HTML com código/serviço/data disparado ao `clientEmail` | ✅ (ativo com config de e-mail) |
+| EM-02 | Não bloquear o agendamento se o e-mail falhar | `POST /api/appointments` retorna 201 mesmo se o envio falhar | ✅ (testado) |
+| EM-03 | Registro verificável do e-mail gerado | Com `mail_log` configurado, o conteúdo é gravado em arquivo para auditoria | ✅ (testado) |
+
+> Em produção (Hostinger), o envio usa `mail()` do PHP. Entrega real depende do servidor de e-mail
+> da hospedagem.
+
+### Fase 3 — Lembrete automático (cron)
+
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| CR-01 | Endpoint `GET /api/cron/reminders?key=...` protegido por chave | Chave inválida → 401 | ✅ (testado) |
+| CR-02 | Selecionar agendamentos do dia seguinte ainda não lembrados | Retorna/processa apenas `confirmed` de amanhã sem `reminded_at` | ✅ (testado) |
+| CR-03 | Marcar como lembrado (idempotente) | Após processar, `reminded_at` é setado; nova execução não reprocessa | ✅ (testado) |
+| CR-04 | Enviar o lembrete por e-mail | Usa o mailer da Fase 2 para cada agendamento | ✅ |
+
+> Em produção, agendar o endpoint via **Cron Jobs** do hPanel (ex.: 1x/dia). Documentado em
+> `docs/DEPLOY_HOSTINGER.md`.

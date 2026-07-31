@@ -26,4 +26,22 @@ return [
     // Domínios liberados para chamar a API (CORS). Use ['*'] para liberar geral
     // ou informe seu domínio, ex: ['https://seudominio.com'].
     'allowed_origins' => ['*'],
+
+    // ---------- Fase 1: Mercado Pago ----------
+    // Access Token do Mercado Pago. Sem ele, a contratação apenas registra a
+    // assinatura como "pending" (fallback). Pode vir da env MP_ACCESS_TOKEN.
+    'mp_access_token' => '',
+    // URL base pública do app (para back_urls/webhook do MP). Ex.: https://seudominio.com/ag_salao
+    'app_base_url' => '',
+
+    // ---------- Fase 2: E-mail ----------
+    'mail_enabled' => false,               // liga o envio real via mail() do PHP
+    'mail_from' => 'no-reply@seudominio.com',
+    'mail_from_name' => 'Ag Salão',
+    // Caminho de arquivo para registrar os e-mails gerados (auditoria/teste). Vazio = desativado.
+    'mail_log' => '',
+
+    // ---------- Fase 3: Lembretes (cron) ----------
+    // Chave secreta exigida no endpoint /api/cron/reminders?key=...
+    'cron_key' => 'troque-esta-chave-do-cron',
 ];

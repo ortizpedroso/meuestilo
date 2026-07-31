@@ -20,6 +20,17 @@ function ag_config(): array
     return $config;
 }
 
+/** Lê uma configuração com override por variável de ambiente (Secrets). */
+function ag_setting(string $key, $default = null)
+{
+    $env = getenv(strtoupper($key));
+    if ($env !== false && $env !== '') {
+        return $env;
+    }
+    $c = ag_config();
+    return $c[$key] ?? $default;
+}
+
 function ag_db(): PDO
 {
     static $pdo = null;

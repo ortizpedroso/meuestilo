@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `appointments` (
   `notes`             TEXT         NULL,
   `status`            VARCHAR(20)  NOT NULL DEFAULT 'confirmed',
   `created_at`        VARCHAR(40)  NULL,
+  `reminded_at`       VARCHAR(40)  NULL,
   PRIMARY KEY (`id`),
   KEY `idx_date` (`date`),
   KEY `idx_status` (`status`)
