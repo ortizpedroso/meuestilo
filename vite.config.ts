@@ -5,6 +5,9 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // App é publicado numa subpasta do public_html na Hostinger: /ag_salao/
+    // Pode ser sobrescrito com a env VITE_BASE (ex: "/" para preview na raiz).
+    base: process.env.VITE_BASE || '/ag_salao/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

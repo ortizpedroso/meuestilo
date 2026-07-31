@@ -1,0 +1,26 @@
+# Ag Salão - App (pasta /ag_salao no public_html)
+# SPA de página única (sem rotas de cliente). Mantém a API intacta e
+# faz fallback do restante para o index.html.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Não interferir na API (deixa a pasta /api com seu próprio .htaccess)
+    RewriteRule ^api(/.*)?$ - [L]
+
+    # Arquivos e pastas reais são servidos normalmente
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Qualquer outra rota cai no index.html do app
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Cache dos assets estáticos (JS/CSS com hash no nome)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>

@@ -5,8 +5,8 @@ import {
   Appointment,
   Customer,
   SalonSettings,
-  WorkingHoursConfig,
-  ServiceCategory
+  ServiceCategory,
+  Subscription
 } from '../types';
 import {
   formatCurrency,
@@ -33,12 +33,11 @@ import {
   Building,
   Settings,
   CalendarCheck,
-  AlertCircle,
   LogOut,
   Sparkles,
-  Phone,
-  Mail,
-  ShieldCheck
+  ShieldCheck,
+  Palette,
+  Save
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -49,11 +48,13 @@ interface AdminPanelProps {
   appointments: Appointment[];
   customers: Customer[];
   settings: SalonSettings;
+  subscriptions: Subscription[];
   onUpdateServices: (services: Service[]) => void;
   onUpdateProfessionals: (professionals: Professional[]) => void;
   onUpdateAppointments: (appointments: Appointment[]) => void;
   onUpdateSettings: (settings: SalonSettings) => void;
-  onResetDefaults: () => void;
+  onReloadData: () => void;
+  onLogout: () => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -64,15 +65,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   appointments,
   customers,
   settings,
+  subscriptions,
   onUpdateServices,
   onUpdateProfessionals,
   onUpdateAppointments,
   onUpdateSettings,
-  onResetDefaults
+  onReloadData,
+  onLogout
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'dashboard' | 'appointments' | 'services' | 'professionals' | 'customers' | 'hours' | 'monetization'
+    'dashboard' | 'appointments' | 'services' | 'professionals' | 'customers' | 'hours' | 'branding' | 'monetization'
   >('dashboard');
+
+  // Rascunho de edição da marca (white-label)
+  const [brandDraft, setBrandDraft] = useState<SalonSettings>(settings);
+  React.useEffect(() => {
+    setBrandDraft(settings);
+  }, [settings]);
+  const handleSaveBrand = () => {
+    onUpdateSettings(brandDraft);
+  };
 
   // Search & Filter states
   const [appointmentSearch, setAppointmentSearch] = useState('');
@@ -240,12 +252,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
           <div className="flex items-center space-x-3">
             <button
-              onClick={onResetDefaults}
+              onClick={onReloadData}
               className="hidden sm:inline-flex items-center px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-semibold transition-colors"
-              title="Restaurar dados iniciais de demonstração"
+              title="Recarregar dados do servidor"
             >
               <RefreshCw className="w-3.5 h-3.5 mr-1 text-amber-400" />
-              <span>Restaurar Demo</span>
+              <span>Recarregar</span>
+            </button>
+
+            <button
+              onClick={onLogout}
+              className="hidden sm:inline-flex items-center px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-semibold transition-colors"
+              title="Sair do painel"
+            >
+              <LogOut className="w-3.5 h-3.5 mr-1 text-amber-400" />
+              <span>Sair</span>
             </button>
 
             <button
@@ -269,6 +290,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               { id: 'professionals', label: 'Profissionais', icon: Users },
               { id: 'customers', label: 'Clientes', icon: Users },
               { id: 'hours', label: 'Horários', icon: Clock },
+              { id: 'branding', label: 'Marca (White-label)', icon: Palette },
               { id: 'monetization', label: 'Plano SaaS Pro', icon: CreditCard }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -728,7 +750,98 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
             )}
 
-            {/* TAB 7: Monetization / SaaS Subscription */}
+            {/* TAB 7: Branding / White-label */}
+            {activeTab === 'branding' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h3 className="text-base font-bold text-white">Identidade da Marca (White-label)</h3>
+                    <p className="text-xs text-zinc-400">Personalize nome, logo, cores e contatos. O site inteiro se adapta à sua marca.</p>
+                  </div>
+                  <button
+                    onClick={handleSaveBrand}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center space-x-1.5 shadow-md"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Salvar Marca</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block text-zinc-300 mb-1">Nome do Salão</label>
+                    <input type="text" value={brandDraft.name}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, name: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">Slogan / Tagline</label>
+                    <input type="text" value={brandDraft.tagline}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, tagline: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">URL do Logo</label>
+                    <input type="text" value={brandDraft.logoUrl}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, logoUrl: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">URL do Banner (foto de destaque)</label>
+                    <input type="text" value={brandDraft.bannerUrl}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, bannerUrl: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">WhatsApp (só números)</label>
+                    <input type="text" value={brandDraft.phone}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, phone: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">Instagram</label>
+                    <input type="text" value={brandDraft.instagram}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, instagram: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">Endereço</label>
+                    <input type="text" value={brandDraft.address}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, address: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">Cidade / UF</label>
+                    <input type="text" value={brandDraft.city}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, city: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">Chave PIX</label>
+                    <input type="text" value={brandDraft.pixKey}
+                      onChange={(e) => setBrandDraft({ ...brandDraft, pixKey: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-zinc-300 mb-1">Cor de Destaque</label>
+                    <div className="flex items-center space-x-3">
+                      <input type="color" value={brandDraft.themeColor || '#d97706'}
+                        onChange={(e) => setBrandDraft({ ...brandDraft, themeColor: e.target.value })}
+                        className="w-12 h-10 rounded-lg bg-zinc-950 border border-zinc-800 cursor-pointer" />
+                      <input type="text" value={brandDraft.themeColor || '#d97706'}
+                        onChange={(e) => setBrandDraft({ ...brandDraft, themeColor: e.target.value })}
+                        className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white font-mono" />
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-zinc-500">
+                  Dica: a cor de destaque é aplicada nos botões, ícones e destaques do site em tempo real após salvar.
+                </p>
+              </div>
+            )}
+
+            {/* TAB 8: Monetization / SaaS Subscription */}
             {activeTab === 'monetization' && (
               <div className="space-y-6">
                 <div className="p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 via-zinc-900 to-zinc-950 border border-amber-500/30 text-white space-y-4">
@@ -760,6 +873,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <span className="text-xs text-zinc-400 mt-1 block">Agendamentos & WhatsApp</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Solicitações de assinatura recebidas */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+                    <CreditCard className="w-4 h-4 text-amber-400" />
+                    <span>Contratações Recebidas ({subscriptions.length})</span>
+                  </h3>
+                  {subscriptions.length === 0 ? (
+                    <p className="text-xs text-zinc-500 py-4 text-center bg-zinc-900 rounded-2xl border border-zinc-800">
+                      Nenhuma contratação registrada ainda.
+                    </p>
+                  ) : (
+                    subscriptions.map((sub) => (
+                      <div key={sub.id} className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-bold text-white">{sub.holderName} {sub.salonName && <span className="text-zinc-400 font-normal">• {sub.salonName}</span>}</p>
+                          <p className="text-xs text-zinc-400">{sub.email} {sub.phone && `• ${sub.phone}`}</p>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className="text-xs text-amber-400 font-bold">{formatCurrency(sub.price)}/mês</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase ${
+                            sub.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                            sub.status === 'cancelled' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                            'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                            {sub.status === 'active' ? 'Ativa' : sub.status === 'cancelled' ? 'Cancelada' : 'Pendente'}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

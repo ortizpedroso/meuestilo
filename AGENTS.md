@@ -3,34 +3,49 @@
 ## Cursor Cloud specific instructions
 
 ### What this project is
-Single front-end-only SPA — "Meu Stilo", a Portuguese salon/barbershop booking & management app.
-Stack: React 19 + TypeScript + Vite 6 + Tailwind CSS 4. Package manager: **npm**.
-There is **no backend, database, or API server**. All state persists in the browser's `localStorage`
-(see `src/services/storage.ts`), seeded from `src/data/initialData.ts`. `express`, `dotenv`, and
-`@google/genai` are listed in `package.json` but are not used by the app; no env vars are required to run it.
+"Ag Salão" (a.k.a. "Meu Stilo") — a Portuguese salon/barbershop booking & management app,
+sold as a **white-label SaaS**. Two parts:
+- Frontend: React 19 + TypeScript + Vite 6 + Tailwind CSS 4 (SPA). Package manager: **npm**.
+- Backend: **PHP + MySQL** REST API in `public/api/` (plain PDO, no framework/composer),
+  targeted at Hostinger shared hosting. Schema + seed in `database/schema.sql`.
 
-### Running / building / linting
-Standard scripts are in `package.json`; nothing custom is required:
-- Dev server: `npm run dev` → serves at `http://localhost:3000` (`--host=0.0.0.0`).
-- Lint / typecheck: `npm run lint` (runs `tsc --noEmit`).
-- Production build: `npm run build`; preview a build with `npm run preview`.
+Deploy target is a subfolder of `public_html`: `public_html/ag_salao/` (Vite `base` is `/ag_salao/`).
+See `docs/DEPLOY_HOSTINGER.md` for the full deploy guide.
+
+Data lives in MySQL (not localStorage). `customers` are **derived** from appointments
+(`src/utils/customers.ts`), so there is no separate customers table.
+
+### Running / building / linting (frontend)
+Standard scripts in `package.json`:
+- Lint / typecheck: `npm run lint` (`tsc --noEmit`).
+- Production build: `npm run build` → outputs `dist/` (which equals the `ag_salao/` folder:
+  `index.html`, `assets/`, `.htaccess`, and `api/` copied from `public/api/`).
+- `npm run dev` runs Vite on port 3000 but, on its own, has **no API** — see below.
+
+### Running the full stack locally (needed for real end-to-end testing)
+The frontend calls the API at `import.meta.env.BASE_URL + 'api'` (i.e. `/ag_salao/api`).
+`npm run dev` alone cannot serve the PHP API, so test against a PHP server instead:
+- System deps (install once, NOT in the update script): `php-cli`, `php-mysql`, `mariadb-server`.
+- Start DB: `sudo service mariadb start`; create DB `ag_salao` + user and load `database/schema.sql`.
+- Create `public/api/config.php` (gitignored) from `config.sample.php` with the local DB creds
+  and an `admin_password`.
+- Build, then serve `dist` under an `ag_salao/` docroot with the dev router (php has no .htaccess):
+  `ln -s "$PWD/dist" /tmp/webroot/ag_salao && php -S 0.0.0.0:8080 -t /tmp/webroot scripts/php-dev-router.php`
+- App: `http://localhost:8080/ag_salao/` · API: `.../ag_salao/api/bootstrap`.
+- Quick automated check: `node scripts/e2e-test.mjs` (Puppeteer; uses `puppeteer-core` + system Chrome).
+  Admin password in local config is `admin123`.
 
 ### Non-obvious caveats
-- The Vite production build prints a harmless PostCSS warning about an `@import` (Google Fonts) in
-  `src/index.css` needing to precede other rules. It does not fail the build.
-- HMR is controlled by `DISABLE_HMR` in `vite.config.ts`. It is ON by default (HMR enabled). If you edit
-  files and then `git checkout`/revert them, the dev server can keep serving a **stale transformed module**;
-  restart the dev server (and optionally `rm -rf node_modules/.vite`) to get a clean state before testing.
-- Because all data lives in `localStorage`, tests that mutate data leave state behind. The app exposes a
-  "reset to defaults" action (admin panel) that clears the `meustilo_*_v1` keys.
-
-### Known pre-existing bug (blocks interactive end-to-end flows)
-As of the current commit, any interaction that writes to storage crashes the app with
-`Maximum call stack size exceeded` / "Too many re-renders". Root cause is an infinite loop in
-`src/services/storage.ts` + `src/App.tsx`:
-`getCustomers()` → `syncCustomersFromAppointments()` → `setItem()` (which always dispatches the
-`meustilo_storage_update` event) → `App.tsx` `handleStorageUpdate` → `getCustomers()` → … .
-The landing page renders fine, but opening the booking modal / submitting a review / using the admin panel
-crashes. This is application code, not an environment issue — do not attempt to "fix" it as part of
-environment setup. A minimal fix would be to stop `getCustomers()` from writing on read (or make the
-customer-sync `setItem` not dispatch the update event).
+- After changing `public/api/*.php` you must re-run `npm run build` (or edit `dist/api/…`) — the PHP
+  is served from `dist/`/the docroot copy, not from `public/` when serving the built app.
+- Admin auth: `POST /api/login` returns a token = `sha256(admin_password|auth_secret)`; the frontend
+  sends it as `Authorization: Bearer` and stores it in `localStorage` under `ag_salao_admin_token`.
+  Only this token is kept in localStorage; all real data is in MySQL.
+- White-label theme: the accent color (`settings.themeColor`) is applied at runtime by overriding the
+  Tailwind v4 `--color-amber-*` CSS variables (`src/utils/theme.ts`). Most accents in the UI use the
+  `amber` palette, so changing this recolors the whole app.
+- Admin writes for services/professionals/appointments use **bulk replace** (`PUT` replaces the whole
+  table). Public booking uses `POST /api/appointments` (append). Fine for a single-salon MVP.
+- The Vite build prints a harmless PostCSS `@import` (Google Fonts) warning; it does not fail the build.
+- Mercado Pago is not wired yet: `POST /api/subscriptions` records a `pending` subscription and returns
+  `checkoutUrl: null`; the frontend already redirects when a `checkoutUrl` is present (integration hook).
