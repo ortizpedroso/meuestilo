@@ -74,7 +74,7 @@ Progressiva Orgânica, Barba com Toalha Quente, Manicure Completa, Pedicure Comp
 | AG-04 | Cliente escolhe horário disponível | ✅ |
 | AG-05 | Cliente informa nome | ✅ |
 | AG-06 | Cliente informa telefone | ✅ |
-| AG-07 | Cliente informa e-mail | ✅ |
+| AG-07 | Cliente informa e-mail (opcional) | ✅ |
 | AG-08 | Cliente confirma o agendamento (gera código STILO-XXXX) | ✅ |
 
 ### 4. Controle de Horários
