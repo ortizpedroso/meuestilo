@@ -1,0 +1,6 @@
+{
+  "name": "Meu Stilo - Agendamento para Salão",
+  "description": "Sistema completo de agendamento online e gestão para salões de beleza e barbearias com painel admin, WhatsApp e avaliações.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
