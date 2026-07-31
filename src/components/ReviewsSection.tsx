@@ -7,7 +7,7 @@ interface ReviewsSectionProps {
   reviews: Review[];
   averageRating: number;
   totalReviews: number;
-  onAddReview: (review: Omit<Review, 'id' | 'date'>) => void;
+  onAddReview: (review: Omit<Review, 'id' | 'date'>) => Promise<void> | void;
 }
 
 export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
@@ -23,17 +23,22 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   const [serviceName, setServiceName] = useState('Corte / Barba');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientName.trim() || !comment.trim()) return;
 
-    onAddReview({
-      clientName: clientName.trim(),
-      rating,
-      comment: comment.trim(),
-      serviceName,
-      verifiedBooking: true
-    });
+    try {
+      await onAddReview({
+        clientName: clientName.trim(),
+        rating,
+        comment: comment.trim(),
+        serviceName,
+        verifiedBooking: true
+      });
+    } catch (err) {
+      alert('Não foi possível enviar a avaliação: ' + (err instanceof Error ? err.message : 'erro'));
+      return;
+    }
 
     setSubmitted(true);
     setTimeout(() => {

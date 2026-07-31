@@ -89,6 +89,7 @@ export interface SalonSettings {
   city: string;
   instagram: string;
   pixKey: string;
+  themeColor?: string; // cor de destaque (white-label), ex: "#d97706"
   workingHours: WorkingHoursConfig;
   subscriptionPlan: {
     name: string;
@@ -96,4 +97,17 @@ export interface SalonSettings {
     priceMonthly: number;
     nextBillingDate: string;
   };
+}
+
+export interface Subscription {
+  id: string;
+  plan: string;
+  holderName: string;
+  email: string;
+  phone: string;
+  salonName: string;
+  price: number;
+  status: 'pending' | 'active' | 'cancelled';
+  provider?: string;
+  createdAt: string;
 }

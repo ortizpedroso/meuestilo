@@ -33,7 +33,7 @@ interface BookingFlowProps {
   settings: SalonSettings;
   initialService?: Service | null;
   initialProfessional?: Professional | null;
-  onCompleteBooking: (app: Omit<Appointment, 'id' | 'code' | 'createdAt'>) => Appointment;
+  onCompleteBooking: (app: Omit<Appointment, 'id' | 'code' | 'createdAt'>) => Promise<Appointment>;
   onViewEmail: (app: Appointment) => void;
 }
 
@@ -71,6 +71,8 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
 
   // Confirmed appointment object
   const [confirmedApp, setConfirmedApp] = useState<Appointment | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Update initial selections if passed
   React.useEffect(() => {
@@ -109,7 +111,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     if (step > 1 && step < 5) setStep(step - 1);
   };
 
-  const handleSubmitBooking = (e: React.FormEvent) => {
+  const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedService || !selectedDate || !selectedTime || !clientName.trim() || !clientPhone.trim()) {
       return;
@@ -123,24 +125,32 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       ? 'prof-1' // Assign to first by default if any
       : selectedProfessional.id;
 
-    const created = onCompleteBooking({
-      serviceId: selectedService.id,
-      serviceName: selectedService.name,
-      servicePrice: selectedService.price,
-      serviceDuration: selectedService.durationMinutes,
-      professionalId: profId,
-      professionalName: profName,
-      date: selectedDate,
-      time: selectedTime,
-      clientName: clientName.trim(),
-      clientPhone: clientPhone.trim(),
-      clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, '.')}@email.com`,
-      notes: notes.trim(),
-      status: 'confirmed'
-    });
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const created = await onCompleteBooking({
+        serviceId: selectedService.id,
+        serviceName: selectedService.name,
+        servicePrice: selectedService.price,
+        serviceDuration: selectedService.durationMinutes,
+        professionalId: profId,
+        professionalName: profName,
+        date: selectedDate,
+        time: selectedTime,
+        clientName: clientName.trim(),
+        clientPhone: clientPhone.trim(),
+        clientEmail: clientEmail.trim() || `${clientName.toLowerCase().replace(/\s+/g, '.')}@email.com`,
+        notes: notes.trim(),
+        status: 'confirmed'
+      });
 
-    setConfirmedApp(created);
-    setStep(5);
+      setConfirmedApp(created);
+      setStep(5);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Não foi possível concluir o agendamento.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const whatsappUrl = confirmedApp
@@ -454,11 +464,16 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 </div>
               </div>
 
+              {submitError && (
+                <p className="text-xs text-rose-600 text-center font-semibold">{submitError}</p>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-full bg-[#1A1A1A] hover:bg-amber-600 text-white font-bold text-base shadow-lg transition-colors"
+                disabled={submitting}
+                className="w-full py-3.5 rounded-full bg-[#1A1A1A] hover:bg-amber-600 disabled:opacity-60 text-white font-bold text-base shadow-lg transition-colors"
               >
-                Confirmar Agendamento
+                {submitting ? 'Confirmando...' : 'Confirmar Agendamento'}
               </button>
             </form>
           )}

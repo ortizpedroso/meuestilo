@@ -1,0 +1,24 @@
+# Ag Salão - API (Apache/LiteSpeed - Hostinger)
+# Redireciona todas as requisições da pasta /api para o index.php (roteador).
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Base é a própria pasta api (funciona em subpasta, ex: /ag_salao/api/)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# Repassa o header Authorization para o PHP (necessário para o token do admin)
+<IfModule mod_setenvif.c>
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+</IfModule>
+CGIPassAuth On
+
+# Nunca servir o arquivo de configuração como texto
+<Files "config.php">
+    Require all denied
+</Files>
+<Files "config.sample.php">
+    Require all denied
+</Files>

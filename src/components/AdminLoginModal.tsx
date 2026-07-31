@@ -4,34 +4,36 @@ import { X, ShieldCheck, Lock, Key, Sparkles } from 'lucide-react';
 interface AdminLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: () => void;
+  onSubmitPassword: (password: string) => Promise<boolean>;
 }
 
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   isOpen,
   onClose,
-  onLoginSuccess
+  onSubmitPassword
 }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === '123456' || password === 'admin' || password.length > 0) {
-      onLoginSuccess();
+    if (!password) {
+      setError('Informe a senha de acesso.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    const ok = await onSubmitPassword(password);
+    setLoading(false);
+    if (ok) {
       setPassword('');
       setError('');
     } else {
-      setError('Senha incorreta. Tente 123456 ou clique no botão de acesso rápido.');
+      setError('Senha incorreta. Verifique a senha configurada no servidor.');
     }
-  };
-
-  const handleDemoAccess = () => {
-    onLoginSuccess();
-    setPassword('');
-    setError('');
   };
 
   return (
@@ -73,23 +75,18 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-[#1A1A1A] hover:bg-amber-600 text-white font-bold text-sm shadow-md transition-colors"
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-[#1A1A1A] hover:bg-amber-600 disabled:opacity-60 text-white font-bold text-sm shadow-md transition-colors"
           >
-            Entrar no Painel
+            {loading ? 'Entrando...' : 'Entrar no Painel'}
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-slate-200 text-center space-y-3">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold">
-            Modo de Demonstração Comercial
+        <div className="mt-6 pt-6 border-t border-slate-200 text-center">
+          <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-bold flex items-center justify-center space-x-1">
+            <Sparkles className="w-3 h-3 text-amber-600" />
+            <span>Acesso exclusivo do proprietário</span>
           </span>
-          <button
-            onClick={handleDemoAccess}
-            className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-amber-800 font-bold text-xs border border-slate-200 transition-colors flex items-center justify-center space-x-2"
-          >
-            <Sparkles className="w-4 h-4 text-amber-600" />
-            <span>Entrar Direto com Acesso Rápido</span>
-          </button>
         </div>
 
       </div>
