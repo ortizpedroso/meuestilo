@@ -50,14 +50,25 @@ for (const rel of required) {
   if (!fs.existsSync(path.join(appDir, rel))) fail(`arquivo essencial ausente no pacote: ${rel}`);
 }
 if (fs.existsSync(localConfig)) fail('config.php não deveria estar no pacote.');
-log('Validação de arquivos: OK (sem config.php; config.sample.php presente).');
+
+// Valida o build: assets JS presentes e não vazios, e base /ag_salao/ no index.html
+const assetsDir = path.join(appDir, 'assets');
+const jsAssets = fs.readdirSync(assetsDir).filter((f) => f.endsWith('.js'));
+if (jsAssets.length === 0) fail('nenhum asset .js encontrado — build inválido.');
+const biggestJs = Math.max(...jsAssets.map((f) => fs.statSync(path.join(assetsDir, f)).size));
+if (biggestJs < 1024) fail('asset .js muito pequeno — build provavelmente falhou.');
+const indexHtml = fs.readFileSync(path.join(appDir, 'index.html'), 'utf8');
+if (!indexHtml.includes('/ag_salao/')) fail('index.html não referencia a base /ag_salao/ — verifique o vite.config.');
+log('Validação de arquivos: OK (sem config.php; config.sample.php presente; assets e base /ag_salao/ conferidos).');
 
 // Gera o zip (a pasta ag_salao dentro do zip)
 try {
   execSync(`cd "${outDir}" && zip -qr ag_salao.zip ag_salao`, { stdio: 'inherit' });
-  log(`Pacote criado: ${path.relative(root, zipPath)}`);
+  const kb = (fs.statSync(zipPath).size / 1024).toFixed(0);
+  log(`Pacote criado: ${path.relative(root, zipPath)} (${kb} KB)`);
 } catch {
   log('zip indisponível — use a pasta build-deploy/ag_salao/ diretamente.');
 }
 
-log('Pronto! Envie o conteúdo para public_html/ag_salao/ e crie o api/config.php a partir do config.sample.php.');
+log('Pronto! Extraia o zip em public_html/ (gera public_html/ag_salao/) e crie o');
+log('api/config.php a partir do config.sample.php. Depois importe database/schema.sql no phpMyAdmin.');
