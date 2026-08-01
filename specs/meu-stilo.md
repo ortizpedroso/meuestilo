@@ -324,6 +324,28 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
 > credenciais (idealmente as de **teste/sandbox** primeiro). Referência: Orders API do Checkout
 > Transparente (`/v1/orders`, `/process`, `/capture`, `/refund`, `/cancel`).
 
+**Pré-requisitos (MP):**
+- Conta de vendedor no Mercado Pago (ou Mercado Livre).
+- Chave(s) Pix cadastradas (apenas se formos oferecer Pix).
+- Aplicação criada em "Suas integrações" (gera Access Token + Public Key de teste e produção).
+
+**Etapas de integração (checklist oficial):**
+1. Criar a aplicação em "Suas integrações".
+2. Configurar o ambiente de desenvolvimento (credenciais de teste).
+3. Configurar os meios de pagamento desejados (cartão, Pix, boleto).
+4. Configurar as notificações (webhook).
+5. Testar a integração (cartões/dispositivos de teste do MP).
+6. Medir a qualidade da integração.
+7. Subir em produção (trocar para credenciais de produção).
+
+**Decisão de modelo (esforço × personalização):**
+- Checkout Transparente (Orders API): máxima personalização, no nosso site — maior esforço (API + MercadoPago.js).
+- Checkout Bricks: componentes prontos do MP, no nosso site — esforço médio (bom equilíbrio).
+- Checkout Pro (redirect): menor esforço, fora do site — **já implementado como fallback**.
+
+> Recomendação: se o objetivo é pagamento no próprio site com menos esforço/risco, avaliar **Bricks**;
+> se a prioridade é personalização total, seguir com **Orders API**. Definir antes do `/build`.
+
 ### Fase 2 — E-mail de confirmação
 
 | ID | Requisito | Critério de aceite | Status |
