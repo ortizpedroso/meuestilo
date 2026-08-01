@@ -288,15 +288,41 @@ Estas três fases foram construídas. Itens que dependem de credenciais/infra de
 
 ### Fase 1 — Pagamento via Mercado Pago
 
+Dois modelos possíveis (referência oficial):
+
+- **Checkout Pro (redirect)** — cria uma *preference* e redireciona o cliente para a página do
+  Mercado Pago. Já implementado como caminho atual/fallback (mais simples).
+- **Checkout Transparente (Orders API — recomendado)** — o pagamento ocorre dentro do nosso site
+  (cartão, Pix, boleto), sem redirecionar. Usa a **Orders API** (`/v1/orders`) e requer tokenização
+  do cartão no frontend com **MercadoPago.js** (chave pública) + processamento no backend com o
+  Access Token.
+
+#### 1a) Checkout Pro (redirect) — implementado
+
 | ID | Requisito | Critério de aceite | Status |
 |----|-----------|--------------------|--------|
-| MP-01 | `POST /api/subscriptions` cria a *preference* no Mercado Pago quando o token estiver configurado | Retorna `checkoutUrl` = `init_point`; assinatura salva como `pending` | ✅ (ativo com `MP_ACCESS_TOKEN`) |
-| MP-02 | Fallback sem credencial | Sem `MP_ACCESS_TOKEN`, retorna `checkoutUrl: null` e não quebra o fluxo | ✅ (testado) |
-| MP-03 | Webhook `POST /api/mp/webhook` atualiza status | Ao receber notificação `approved`, marca assinatura como `active` | ✅ (estrutura pronta) |
-| MP-04 | Frontend redireciona ao checkout | Se `checkoutUrl` existir, o app redireciona | ✅ (já existente) |
+| MP-01 | `POST /api/subscriptions` cria a *preference* quando o token estiver configurado | Retorna `checkoutUrl` = `init_point`; assinatura `pending` | ✅ (ativo com `MP_ACCESS_TOKEN`) |
+| MP-02 | Fallback sem credencial | Sem `MP_ACCESS_TOKEN`, retorna `checkoutUrl: null` e não quebra | ✅ (testado) |
+| MP-03 | Webhook `POST /api/mp/webhook` atualiza status | Notificação `approved` → assinatura `active` | ✅ (estrutura pronta) |
+| MP-04 | Frontend redireciona ao checkout | Se `checkoutUrl` existir, o app redireciona | ✅ |
 
-> Credencial necessária: `MP_ACCESS_TOKEN` (Secrets/`config.php`). Verificação real do checkout
-> depende dessa credencial.
+#### 1b) Checkout Transparente (Orders API) — alvo recomendado (planejado)
+
+Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order → processa → trata retorno.
+
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| MP-05 | Formulário de pagamento no site (cartão/Pix) com MercadoPago.js | Cartão tokenizado no cliente (nunca trafega PAN pelo nosso backend) | ⏳ requer `MP_PUBLIC_KEY` |
+| MP-06 | `POST /api/orders` cria a order (`/v1/orders`, modo `automatic`) | Retorna `order_id` e status (`approved`/`pending`/`rejected`) | ⏳ requer `MP_ACCESS_TOKEN` |
+| MP-07 | Suporte a captura em duas etapas (modo `manual` + `/capture`) | Autorizar e capturar posteriormente | ⏳ |
+| MP-08 | Consulta/So status da order (`GET /v1/orders/{id}`) e webhook | Atualiza assinatura para `active` quando aprovado | ⏳ |
+| MP-09 | Reembolso/cancelamento (`/refund`, `/cancel`) | Operações pós-pagamento no admin | ⏳ |
+| MP-10 | Fallback seguro | Sem credenciais, mantém o registro `pending` sem quebrar | ⏳ |
+
+> Credenciais necessárias (Secrets/`config.php`): `MP_ACCESS_TOKEN` (backend) e `MP_PUBLIC_KEY`
+> (frontend, para o MercadoPago.js). A construção e o teste do Checkout Transparente dependem dessas
+> credenciais (idealmente as de **teste/sandbox** primeiro). Referência: Orders API do Checkout
+> Transparente (`/v1/orders`, `/process`, `/capture`, `/refund`, `/cancel`).
 
 ### Fase 2 — E-mail de confirmação
 
