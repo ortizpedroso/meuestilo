@@ -67,8 +67,9 @@ return [
     'auth_secret' => 'uma-string-aleatoria-bem-longa',
     'allowed_origins' => ['*'],
 
-    // Fase 1 - Mercado Pago (opcional; sem token, a contratação fica "pending")
-    'mp_access_token' => 'SEU_ACCESS_TOKEN_MP',
+    // Fase 1 - Mercado Pago (opcional; sem credenciais, a contratação fica "pending")
+    'mp_access_token' => 'SEU_ACCESS_TOKEN_MP',   // backend (Checkout Pro e Transparente)
+    'mp_public_key' => 'SUA_PUBLIC_KEY_MP',        // frontend (MercadoPago.js / Checkout Transparente)
     'app_base_url' => 'https://seudominio.com/ag_salao',
 
     // Fase 2 - E-mail de confirmação
@@ -109,11 +110,17 @@ Para começar, o **upload de arquivos** (Passos 2–4) é o caminho mais simples
 ## Fases avançadas (opcionais)
 
 ### Fase 1 — Mercado Pago
-- Preencha `mp_access_token` (ou defina a env/secret `MP_ACCESS_TOKEN`) e `app_base_url` no `config.php`.
-- Com o token, o `POST /api/subscriptions` cria a *preference* e retorna `checkoutUrl` (o frontend
-  redireciona automaticamente). O webhook `POST /api/mp/webhook` marca a assinatura como `active`
-  quando o pagamento é aprovado — configure essa URL no painel do Mercado Pago.
-- Sem token, a contratação apenas registra a assinatura como `pending` (fallback seguro).
+Dois modos disponíveis:
+- Checkout Pro (redirect): `POST /api/subscriptions` cria a *preference* e retorna `checkoutUrl`
+  (o frontend redireciona). Precisa de `mp_access_token`.
+- Checkout Transparente (pagamento no site): `POST /api/orders` processa o cartão via Orders API;
+  a aprovação ativa a assinatura. Precisa de `mp_access_token` (backend) e `mp_public_key` (frontend).
+- Webhook `POST /api/mp/webhook` marca a assinatura como `active` — configure essa URL no painel do MP.
+- Sem credenciais, a contratação registra a assinatura como `pending` (fallback seguro).
+
+> Teste em sandbox (cartão): use um usuário de teste COMPRADOR como pagador (e-mail `...@testuser.com`)
+> e cartões de teste do MP. Nos nossos testes, o cartão Visa de teste aprovou; o pagador precisa ter
+> nome + CPF preenchidos. Detalhes em `specs/meu-stilo.md` (Fase 1).
 
 ### Fase 2 — E-mail de confirmação
 - Defina `mail_enabled => true` e `mail_from`/`mail_from_name`. Na Hostinger o envio usa `mail()` do PHP.
