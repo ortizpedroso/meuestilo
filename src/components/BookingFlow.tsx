@@ -194,6 +194,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Fechar"
             className="text-slate-400 hover:text-white p-1.5 rounded-xl bg-white/10 transition-colors"
           >
             <X className="w-5 h-5" />

@@ -30,6 +30,7 @@ export const EmailModal: React.FC<EmailModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Fechar"
             className="text-slate-400 hover:text-white p-1 rounded-lg"
           >
             <X className="w-5 h-5" />

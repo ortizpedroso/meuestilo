@@ -62,6 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Share Button */}
             <button
               onClick={onOpenShare}
+              aria-label="Compartilhar link do salão"
               className="inline-flex items-center justify-center px-3 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200/80 text-xs sm:text-sm font-semibold"
               title="Compartilhar Link do Salão"
             >
@@ -72,6 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Admin Toggle */}
             <button
               onClick={onOpenAdmin}
+              aria-label="Abrir painel administrativo"
               className={`inline-flex items-center justify-center px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all border ${
                 isAdminLoggedIn
                   ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
@@ -86,6 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Agendar CTA */}
             <button
               onClick={onOpenBooking}
+              aria-label="Agendar horário"
               className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-[#1A1A1A] hover:bg-amber-600 text-white font-bold text-xs sm:text-sm shadow-md transition-colors"
             >
               <Calendar className="w-4 h-4 mr-1.5" />

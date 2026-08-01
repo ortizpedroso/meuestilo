@@ -498,5 +498,11 @@ try {
     if ($db->inTransaction()) {
         $db->rollBack();
     }
-    ag_json(['error' => 'Erro interno na API.', 'detail' => $e->getMessage()], 500);
+    // Não expõe detalhes internos em produção. Ative 'debug' no config.php para depurar.
+    $payload = ['error' => 'Erro interno na API.'];
+    if (filter_var(ag_setting('debug', false), FILTER_VALIDATE_BOOLEAN)) {
+        $payload['detail'] = $e->getMessage();
+    }
+    error_log('[ag_salao] ' . $e->getMessage());
+    ag_json($payload, 500);
 }

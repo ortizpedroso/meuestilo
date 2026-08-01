@@ -44,4 +44,7 @@ return [
     // ---------- Fase 3: Lembretes (cron) ----------
     // Chave secreta exigida no endpoint /api/cron/reminders?key=...
     'cron_key' => 'troque-esta-chave-do-cron',
+
+    // Depuração: se true, respostas de erro 500 incluem detalhes (NÃO usar em produção).
+    'debug' => false,
 ];

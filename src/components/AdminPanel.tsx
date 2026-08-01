@@ -296,6 +296,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
             <button
               onClick={onClose}
+              aria-label="Fechar painel"
               className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />

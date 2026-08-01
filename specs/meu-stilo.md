@@ -253,6 +253,18 @@ Persistência real em **MySQL** (não mais `localStorage`).
 
 ---
 
+## Qualidade: UI/UX, SEO e Segurança
+
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| Q-SEO-01 | `index.html` com idioma, título e descrição adequados | `lang="pt-BR"`, `<title>` descritivo e `meta description` presentes | ✅ |
+| Q-SEO-02 | Metadados sociais e favicon | Open Graph (title/description/locale) e favicon (sem 404) | ✅ |
+| Q-UX-01 | Acessibilidade dos principais controles | Botões de ícone (header e "fechar" dos modais) com `aria-label`; imagens com `alt` | ✅ |
+| Q-UX-02 | Estados de carregamento e erro | Tela de "carregando" e tela de erro com "tentar novamente" na inicialização | ✅ |
+| Q-SEC-01 | API não vaza detalhes internos | Erros 500 não retornam stack/mensagem interna (exceto com `debug` ligado) | ✅ |
+| Q-SEC-02 | Cabeçalhos de segurança | `.htaccess` define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` (e `Permissions-Policy` no app) | ✅ |
+| Q-SEC-03 | Proteção de dados e injeção | Consultas via PDO prepared statements; `config.php` inacessível via web; CORS configurável | ✅ |
+
 ## Fases avançadas (pós-MVP) — implementadas
 
 Estas três fases foram construídas. Itens que dependem de credenciais/infra de produção têm

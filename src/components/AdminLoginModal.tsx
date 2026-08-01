@@ -42,6 +42,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         
         <button
           onClick={onClose}
+          aria-label="Fechar"
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1.5 rounded-lg bg-slate-100"
         >
           <X className="w-5 h-5" />

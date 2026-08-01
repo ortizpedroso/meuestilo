@@ -145,6 +145,7 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
             
             <button
               onClick={() => setIsModalOpen(false)}
+              aria-label="Fechar"
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1 rounded-lg"
             >
               <X className="w-5 h-5" />

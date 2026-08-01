@@ -131,6 +131,26 @@ Para começar, o **upload de arquivos** (Passos 2–4) é o caminho mais simples
 
 ---
 
+## Checklist de ativação (pendências do proprietário)
+
+Resumo do que o dono do salão precisa providenciar para ligar as fases avançadas
+(guardado aqui como referência):
+
+1. **Token do Mercado Pago (`MP_ACCESS_TOKEN`)** — credencial externa.
+   - Obter em https://www.mercadopago.com.br/developers → "Suas integrações" → sua aplicação → "Credenciais".
+   - Existe token de **teste** (sandbox) e de **produção**. Comece pelo de teste.
+   - Colocar em `config.php` (`mp_access_token`) ou como secret/env `MP_ACCESS_TOKEN`.
+   - Sem token: a contratação apenas registra a assinatura como "pending" (fallback).
+
+2. **E-mail remetente** — não é uma senha/token, é só um endereço do seu domínio.
+   - Criar/usar um e-mail no hPanel (ex.: `nao-responda@seudominio.com`).
+   - Em `config.php`: `mail_enabled => true` e `mail_from`. Na Hostinger o envio usa `mail()` do PHP.
+
+3. **Chave do Cron (`cron_key`) + Cron Job** — a chave você inventa; o Cron você agenda.
+   - `cron_key`: uma senha qualquer criada por você, para proteger o endpoint de lembretes.
+   - No hPanel → **Cron Jobs**, agendar (ex.: diário) o comando:
+     `curl -s "https://seudominio.com/ag_salao/api/cron/reminders?key=SUA_CRON_KEY"`
+
 ## Rodando localmente (desenvolvimento)
 
 Requer PHP e MySQL/MariaDB locais.
