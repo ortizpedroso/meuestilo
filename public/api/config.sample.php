@@ -28,9 +28,11 @@ return [
     'allowed_origins' => ['*'],
 
     // ---------- Fase 1: Mercado Pago ----------
-    // Access Token do Mercado Pago. Sem ele, a contratação apenas registra a
-    // assinatura como "pending" (fallback). Pode vir da env MP_ACCESS_TOKEN.
+    // Access Token do Mercado Pago (backend). Sem ele, a contratação apenas registra
+    // a assinatura como "pending" (fallback). Pode vir da env MP_ACCESS_TOKEN.
     'mp_access_token' => '',
+    // Public Key do Mercado Pago (frontend, MercadoPago.js). Pode vir da env MP_PUBLIC_KEY.
+    'mp_public_key' => '',
     // URL base pública do app (para back_urls/webhook do MP). Ex.: https://seudominio.com/ag_salao
     'app_base_url' => '',
 

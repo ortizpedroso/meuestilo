@@ -346,6 +346,17 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
 > Recomendação: se o objetivo é pagamento no próprio site com menos esforço/risco, avaliar **Bricks**;
 > se a prioridade é personalização total, seguir com **Orders API**. Definir antes do `/build`.
 
+**Resultado da validação em sandbox (01/08/2026):**
+- Checkout Pro (redirect): ✅ validado com as credenciais de teste — `POST /api/subscriptions` gerou um
+  `init_point` real do Mercado Pago (MP-01/MP-02/MP-04 comprovados de ponta a ponta).
+- Checkout Transparente (Orders/Payments — cobrança de cartão no site): ⛔ bloqueado com as
+  credenciais de teste. A tokenização do cartão funciona (`/v1/card_tokens`), mas a cobrança retorna
+  `Unauthorized use of live credentials` (Payments) / `invalid_transaction_amount` (Orders). Conforme
+  a doc oficial, a cobrança de cartão em sandbox exige **credenciais de PRODUÇÃO + usuários de teste**
+  (contas de teste vendedor/comprador), não as "credenciais de teste" do painel.
+  → Para construir e validar o Transparente: fornecer credenciais de produção + um usuário de teste
+  vendedor (ou confirmar o setup de teste para a Orders API).
+
 ### Fase 2 — E-mail de confirmação
 
 | ID | Requisito | Critério de aceite | Status |
