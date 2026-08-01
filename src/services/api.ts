@@ -63,6 +63,15 @@ export interface BootstrapData {
   appointments: Appointment[];
   reviews: Review[];
   settings: SalonSettings;
+  mpPublicKey?: string;
+}
+
+export interface OrderResult {
+  approved: boolean;
+  orderStatus: string | null;
+  orderId: string | null;
+  error: string | null;
+  subscription: Subscription;
 }
 
 export const api = {
@@ -126,5 +135,9 @@ export const api = {
     request<{ subscription: Subscription; checkoutUrl: string | null }>('subscriptions', {
       method: 'POST',
       body: JSON.stringify(payload)
-    })
+    }),
+
+  // Checkout Transparente: processa o pagamento no site (Orders API)
+  createOrder: (payload: Record<string, unknown>) =>
+    request<OrderResult>('orders', { method: 'POST', body: JSON.stringify(payload) })
 };

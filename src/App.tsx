@@ -36,6 +36,7 @@ export default function App() {
   const [settings, setSettings] = useState<SalonSettings>(INITIAL_SALON_SETTINGS);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
 
+  const [mpPublicKey, setMpPublicKey] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -69,6 +70,7 @@ export default function App() {
       if (data.settings && data.settings.name) {
         setSettings(data.settings);
       }
+      setMpPublicKey(data.mpPublicKey || '');
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Falha ao carregar os dados.');
     } finally {
@@ -256,7 +258,7 @@ export default function App() {
           onAddReview={handleAddReview}
         />
 
-        <PlansSection settings={settings} onSubscribed={handleSubscribed} />
+        <PlansSection settings={settings} mpPublicKey={mpPublicKey} onSubscribed={handleSubscribed} />
       </main>
 
       <Footer

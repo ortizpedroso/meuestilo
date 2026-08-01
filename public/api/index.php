@@ -9,6 +9,69 @@ require __DIR__ . '/mailer.php';
 
 ag_cors();
 
+/** Checkout Transparente (Orders API): cria e processa uma order com card_token. */
+function ag_mp_create_order(array $in): array
+{
+    $token = ag_setting('mp_access_token', '');
+    if (!$token || !function_exists('curl_init')) {
+        return ['ok' => false, 'error' => 'Pagamento não configurado no servidor.', 'fallback' => true];
+    }
+    $amount = number_format((float) ($in['price'] ?? 0), 2, '.', '');
+    $payer = [
+        'email' => $in['payerEmail'] ?? '',
+        'entity_type' => 'individual',
+        'first_name' => $in['firstName'] ?? ($in['holderName'] ?? 'Cliente'),
+        'last_name' => $in['lastName'] ?? '.',
+    ];
+    if (!empty($in['docNumber'])) {
+        $payer['identification'] = ['type' => $in['docType'] ?? 'CPF', 'number' => $in['docNumber']];
+    }
+    $payload = [
+        'type' => 'online',
+        'external_reference' => $in['externalReference'] ?? '',
+        'total_amount' => $amount,
+        'processing_mode' => 'automatic',
+        'description' => $in['description'] ?? 'Assinatura',
+        'payer' => $payer,
+        'transactions' => ['payments' => [[
+            'amount' => $amount,
+            'payment_method' => [
+                'id' => $in['paymentMethodId'] ?? '',
+                'type' => $in['paymentType'] ?? 'credit_card',
+                'token' => $in['token'] ?? '',
+                'installments' => (int) ($in['installments'] ?? 1),
+            ],
+        ]]],
+    ];
+    $ch = curl_init('https://api.mercadopago.com/v1/orders');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token,
+            'X-Idempotency-Key: ' . bin2hex(random_bytes(16)),
+        ],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        CURLOPT_TIMEOUT => 25,
+    ]);
+    $res = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $data = $res ? json_decode($res, true) : null;
+    if ($res === false || !$data) {
+        return ['ok' => false, 'error' => 'Falha de comunicação com o provedor de pagamento.'];
+    }
+    $orderStatus = $data['status'] ?? ($data['data']['status'] ?? null);
+    $orderId = $data['id'] ?? ($data['data']['id'] ?? null);
+    if ($code >= 300 || !$orderStatus) {
+        $msg = $data['errors'][0]['message'] ?? ($data['message'] ?? 'Pagamento recusado.');
+        return ['ok' => false, 'error' => $msg, 'orderStatus' => $orderStatus, 'orderId' => $orderId];
+    }
+    $approved = in_array($orderStatus, ['processed', 'approved'], true);
+    return ['ok' => $approved, 'orderStatus' => $orderStatus, 'orderId' => $orderId, 'raw' => $data];
+}
+
 /** Fase 1: cria uma preference de checkout no Mercado Pago. Retorna init_point ou null. */
 function ag_mp_create_preference(array $sub): ?string
 {
@@ -237,6 +300,7 @@ try {
                 'appointments' => $appointments,
                 'reviews' => $reviews,
                 'settings' => $settings,
+                'mpPublicKey' => (string) ag_setting('mp_public_key', ''),
             ]);
             break;
         }
@@ -479,6 +543,52 @@ try {
             ag_require_admin();
             $appointments = array_map('map_appointment', $db->query('SELECT * FROM appointments')->fetchAll());
             ag_json(derive_customers($appointments));
+            break;
+        }
+
+        // ---------------- ORDERS (Checkout Transparente / pagamento no site) ----------------
+        case 'orders': {
+            if ($method !== 'POST') {
+                ag_json(['error' => 'Método não permitido.'], 405);
+            }
+            $b = ag_body();
+            if (empty($b['token']) || empty($b['payerEmail']) || empty($b['holderName'])) {
+                ag_json(['error' => 'Dados de pagamento incompletos.'], 422);
+            }
+            $price = (float) ($b['price'] ?? 0);
+            // Registra a assinatura como pending
+            $subId = 'sub-' . (string) round(microtime(true) * 1000);
+            $createdAt = gmdate('Y-m-d\TH:i:s\Z');
+            $db->prepare('INSERT INTO subscriptions (id,plan,holder_name,email,phone,salon_name,price,status,provider,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
+               ->execute([$subId, $b['plan'] ?? 'Pro', $b['holderName'], $b['payerEmail'], $b['phone'] ?? '', $b['salonName'] ?? '', $price, 'pending', 'mercadopago', $createdAt]);
+
+            $result = ag_mp_create_order([
+                'token' => $b['token'],
+                'paymentMethodId' => $b['paymentMethodId'] ?? '',
+                'paymentType' => $b['paymentType'] ?? 'credit_card',
+                'installments' => $b['installments'] ?? 1,
+                'price' => $price,
+                'payerEmail' => $b['payerEmail'],
+                'firstName' => $b['firstName'] ?? $b['holderName'],
+                'lastName' => $b['lastName'] ?? '.',
+                'docType' => $b['docType'] ?? 'CPF',
+                'docNumber' => $b['docNumber'] ?? '',
+                'holderName' => $b['holderName'],
+                'description' => 'Assinatura ' . ($b['plan'] ?? 'Pro'),
+                'externalReference' => $subId,
+            ]);
+
+            if (!empty($result['ok'])) {
+                $db->prepare('UPDATE subscriptions SET status = ? WHERE id = ?')->execute(['active', $subId]);
+            }
+            $row = $db->query('SELECT * FROM subscriptions WHERE id = ' . $db->quote($subId))->fetch();
+            ag_json([
+                'approved' => !empty($result['ok']),
+                'orderStatus' => $result['orderStatus'] ?? null,
+                'orderId' => $result['orderId'] ?? null,
+                'error' => $result['error'] ?? null,
+                'subscription' => map_subscription($row),
+            ], !empty($result['ok']) ? 201 : 402);
             break;
         }
 

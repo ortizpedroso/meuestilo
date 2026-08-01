@@ -312,12 +312,12 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
 
 | ID | Requisito | Critério de aceite | Status |
 |----|-----------|--------------------|--------|
-| MP-05 | Formulário de pagamento no site (cartão/Pix) com MercadoPago.js | Cartão tokenizado no cliente (nunca trafega PAN pelo nosso backend) | ⏳ requer `MP_PUBLIC_KEY` |
-| MP-06 | `POST /api/orders` cria a order (`/v1/orders`, modo `automatic`) | Retorna `order_id` e status (`approved`/`pending`/`rejected`) | ⏳ requer `MP_ACCESS_TOKEN` |
-| MP-07 | Suporte a captura em duas etapas (modo `manual` + `/capture`) | Autorizar e capturar posteriormente | ⏳ |
-| MP-08 | Consulta/So status da order (`GET /v1/orders/{id}`) e webhook | Atualiza assinatura para `active` quando aprovado | ⏳ |
-| MP-09 | Reembolso/cancelamento (`/refund`, `/cancel`) | Operações pós-pagamento no admin | ⏳ |
-| MP-10 | Fallback seguro | Sem credenciais, mantém o registro `pending` sem quebrar | ⏳ |
+| MP-05 | Formulário de pagamento no site (cartão) com MercadoPago.js (Brick) | Cartão tokenizado no cliente (PAN nunca passa pelo nosso backend) | ✅ validado (brick renderiza no site) |
+| MP-06 | `POST /api/orders` cria e processa a order (`/v1/orders`, `automatic`) | Retorna `orderId` e `orderStatus`; pagamento aprovado ativa a assinatura | ✅ validado (order `processed`/`accredited`) |
+| MP-07 | Suporte a captura em duas etapas (modo `manual` + `/capture`) | Autorizar e capturar posteriormente | ⏳ pós-MVP |
+| MP-08 | Aprovação ativa a assinatura + webhook | Order aprovada → assinatura `active`; webhook `POST /api/mp/webhook` pronto | ✅ |
+| MP-09 | Reembolso/cancelamento (`/refund`, `/cancel`) no admin | Operações pós-pagamento | ⏳ pós-MVP |
+| MP-10 | Fallback seguro | Sem `MP_PUBLIC_KEY`, cai no fluxo de assinatura `pending` sem quebrar | ✅ |
 
 > Credenciais necessárias (Secrets/`config.php`): `MP_ACCESS_TOKEN` (backend) e `MP_PUBLIC_KEY`
 > (frontend, para o MercadoPago.js). A construção e o teste do Checkout Transparente dependem dessas
@@ -347,15 +347,13 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
 > se a prioridade é personalização total, seguir com **Orders API**. Definir antes do `/build`.
 
 **Resultado da validação em sandbox (01/08/2026):**
-- Checkout Pro (redirect): ✅ validado com as credenciais de teste — `POST /api/subscriptions` gerou um
-  `init_point` real do Mercado Pago (MP-01/MP-02/MP-04 comprovados de ponta a ponta).
-- Checkout Transparente (Orders/Payments — cobrança de cartão no site): ⛔ bloqueado com as
-  credenciais de teste. A tokenização do cartão funciona (`/v1/card_tokens`), mas a cobrança retorna
-  `Unauthorized use of live credentials` (Payments) / `invalid_transaction_amount` (Orders). Conforme
-  a doc oficial, a cobrança de cartão em sandbox exige **credenciais de PRODUÇÃO + usuários de teste**
-  (contas de teste vendedor/comprador), não as "credenciais de teste" do painel.
-  → Para construir e validar o Transparente: fornecer credenciais de produção + um usuário de teste
-  vendedor (ou confirmar o setup de teste para a Orders API).
+- Checkout Pro (redirect): ✅ validado — `POST /api/subscriptions` gerou um `init_point` real.
+- Checkout Transparente (Orders API): ✅ validado de ponta a ponta. Descoberta importante do sandbox:
+  a cobrança exige (a) **pagador = usuário de teste comprador** (e-mail `...@testuser.com`, criável via
+  `POST /users/test_user`), (b) **payer completo** (nome + identificação CPF) e (c) o cartão de teste
+  **Visa** funcionou (o Mastercard de teste retornou `invalid_transaction_amount` nesta conta). Com
+  isso, `POST /api/orders` retornou order `processed`/`accredited` e a assinatura ficou `active`.
+- Observação: o backend usa `MP_ACCESS_TOKEN`; o frontend usa `MP_PUBLIC_KEY` (exposta em `/bootstrap`).
 
 ### Fase 2 — E-mail de confirmação
 
