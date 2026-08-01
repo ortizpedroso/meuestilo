@@ -7,13 +7,15 @@ interface FooterProps {
   onOpenBooking: () => void;
   onOpenAdmin: () => void;
   onOpenShare: () => void;
+  onOpenMyAppointment: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   settings,
   onOpenBooking,
   onOpenAdmin,
-  onOpenShare
+  onOpenShare,
+  onOpenMyAppointment
 }) => {
   return (
     <footer className="bg-white text-slate-600 border-t border-slate-200 pt-16 pb-12">
@@ -41,6 +43,11 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button onClick={onOpenBooking} className="hover:text-amber-700 transition-colors">
                   Agendar Horário Online
+                </button>
+              </li>
+              <li>
+                <button onClick={onOpenMyAppointment} className="hover:text-amber-700 transition-colors">
+                  Consultar / Cancelar Agendamento
                 </button>
               </li>
               <li>

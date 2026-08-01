@@ -91,6 +91,17 @@ export const api = {
   createAppointment: (app: Omit<Appointment, 'id' | 'code' | 'createdAt'>) =>
     request<Appointment>('appointments', { method: 'POST', body: JSON.stringify(app) }),
 
+  // IMP-03: autoatendimento do cliente (consultar/cancelar por código + telefone)
+  lookupAppointment: (code: string, phone: string) =>
+    request<Appointment>(
+      `appointments/lookup?code=${encodeURIComponent(code)}&phone=${encodeURIComponent(phone)}`
+    ),
+  cancelAppointment: (code: string, phone: string) =>
+    request<Appointment>('appointments/cancel', {
+      method: 'POST',
+      body: JSON.stringify({ code, phone })
+    }),
+
   saveAppointments: (items: Appointment[]) =>
     request<Appointment[]>('appointments', { method: 'PUT', body: JSON.stringify(items) }),
 

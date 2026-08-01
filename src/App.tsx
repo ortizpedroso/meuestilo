@@ -23,6 +23,7 @@ import { ShareModal } from './components/ShareModal';
 import { EmailModal } from './components/EmailModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminPanel } from './components/AdminPanel';
+import { MyAppointmentModal } from './components/MyAppointmentModal';
 import { Footer } from './components/Footer';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
@@ -51,6 +52,7 @@ export default function App() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => api ? false : false);
 
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isMyApptOpen, setIsMyApptOpen] = useState(false);
   const [isEmailOpen, setIsEmailOpen] = useState(false);
   const [appointmentForEmail, setAppointmentForEmail] = useState<Appointment | null>(null);
 
@@ -262,6 +264,7 @@ export default function App() {
         onOpenBooking={() => handleOpenBooking()}
         onOpenAdmin={handleOpenAdminToggle}
         onOpenShare={() => setIsShareOpen(true)}
+        onOpenMyAppointment={() => setIsMyApptOpen(true)}
       />
 
       <BookingFlow
@@ -279,6 +282,8 @@ export default function App() {
       />
 
       <ShareModal settings={settings} isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
+
+      <MyAppointmentModal isOpen={isMyApptOpen} onClose={() => setIsMyApptOpen(false)} />
 
       <EmailModal
         appointment={appointmentForEmail}

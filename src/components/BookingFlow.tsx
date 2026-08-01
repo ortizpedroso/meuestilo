@@ -122,7 +122,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       : selectedProfessional.name;
 
     const profId = typeof selectedProfessional === 'string'
-      ? 'prof-1' // Assign to first by default if any
+      ? 'any' // servidor escolhe um profissional livre
       : selectedProfessional.id;
 
     setSubmitting(true);

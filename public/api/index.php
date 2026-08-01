@@ -182,6 +182,32 @@ function derive_customers(array $appointments): array
     return array_values($map);
 }
 
+function ag_time_to_min(string $t): int
+{
+    $p = explode(':', $t);
+    return ((int) ($p[0] ?? 0)) * 60 + ((int) ($p[1] ?? 0));
+}
+
+/** Verifica conflito de horário para o mesmo profissional (anti double-booking). */
+function ag_has_conflict(PDO $db, string $profId, string $date, string $time, int $duration, ?string $ignoreId = null): bool
+{
+    $stmt = $db->prepare("SELECT time, service_duration, id FROM appointments WHERE professional_id = ? AND date = ? AND status <> 'cancelled'");
+    $stmt->execute([$profId, $date]);
+    $newStart = ag_time_to_min($time);
+    $newEnd = $newStart + $duration;
+    foreach ($stmt->fetchAll() as $r) {
+        if ($ignoreId && $r['id'] === $ignoreId) {
+            continue;
+        }
+        $s = ag_time_to_min($r['time']);
+        $e = $s + (int) $r['service_duration'];
+        if ($newStart < $e && $newEnd > $s) {
+            return true;
+        }
+    }
+    return false;
+}
+
 $db = ag_db();
 
 try {
@@ -283,6 +309,39 @@ try {
 
         // ---------------- APPOINTMENTS ----------------
         case 'appointments': {
+            // IMP-03: consulta pública por código + telefone
+            if ($method === 'GET' && $id === 'lookup') {
+                $code = trim($_GET['code'] ?? '');
+                $phone = preg_replace('/\D/', '', $_GET['phone'] ?? '');
+                if (!$code || !$phone) {
+                    ag_json(['error' => 'Informe o código e o telefone.'], 422);
+                }
+                $stmt = $db->prepare('SELECT * FROM appointments WHERE code = ?');
+                $stmt->execute([$code]);
+                $row = $stmt->fetch();
+                if (!$row || preg_replace('/\D/', '', $row['client_phone']) !== $phone) {
+                    ag_json(['error' => 'Agendamento não encontrado. Verifique o código e o telefone.'], 404);
+                }
+                ag_json(map_appointment($row));
+            }
+            // IMP-03: cancelamento público por código + telefone
+            if ($method === 'POST' && $id === 'cancel') {
+                $b = ag_body();
+                $code = trim($b['code'] ?? '');
+                $phone = preg_replace('/\D/', '', $b['phone'] ?? '');
+                if (!$code || !$phone) {
+                    ag_json(['error' => 'Informe o código e o telefone.'], 422);
+                }
+                $stmt = $db->prepare('SELECT * FROM appointments WHERE code = ?');
+                $stmt->execute([$code]);
+                $row = $stmt->fetch();
+                if (!$row || preg_replace('/\D/', '', $row['client_phone']) !== $phone) {
+                    ag_json(['error' => 'Agendamento não encontrado. Verifique o código e o telefone.'], 404);
+                }
+                $db->prepare("UPDATE appointments SET status = 'cancelled' WHERE id = ?")->execute([$row['id']]);
+                $row['status'] = 'cancelled';
+                ag_json(map_appointment($row));
+            }
             if ($method === 'GET') { // admin
                 ag_require_admin();
                 ag_json(array_map('map_appointment', $db->query('SELECT * FROM appointments ORDER BY date DESC, time DESC')->fetchAll()));
@@ -292,17 +351,50 @@ try {
                 if (empty($b['clientName']) || empty($b['clientPhone']) || empty($b['date']) || empty($b['time'])) {
                     ag_json(['error' => 'Dados do agendamento incompletos.'], 422);
                 }
+                // IMP-02: validação de formato
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $b['date']) || !preg_match('/^\d{2}:\d{2}$/', (string) $b['time'])) {
+                    ag_json(['error' => 'Data ou horário em formato inválido.'], 422);
+                }
+                $allowedStatus = ['pending', 'confirmed', 'completed', 'cancelled'];
+                $status = in_array($b['status'] ?? 'confirmed', $allowedStatus, true) ? $b['status'] : 'confirmed';
+                // IMP-01: anti double-booking + resolução de "Qualquer profissional"
+                $profId = (string) ($b['professionalId'] ?? '');
+                $profName = (string) ($b['professionalName'] ?? '');
+                $duration = (int) ($b['serviceDuration'] ?? 30);
+                if ($profId === 'any' || $profId === '') {
+                    // Escolhe o primeiro profissional que trabalha no dia e está livre no horário
+                    $dow = (int) date('w', strtotime($b['date'] . ' 00:00:00'));
+                    $pros = $db->query('SELECT * FROM professionals ORDER BY sort_order, name')->fetchAll();
+                    $chosen = null;
+                    foreach ($pros as $p) {
+                        $wd = json_decode($p['working_days'] ?? '[]', true) ?: [];
+                        if (!in_array($dow, $wd)) {
+                            continue;
+                        }
+                        if (!ag_has_conflict($db, $p['id'], $b['date'], $b['time'], $duration)) {
+                            $chosen = $p;
+                            break;
+                        }
+                    }
+                    if (!$chosen) {
+                        ag_json(['error' => 'Nenhum profissional disponível neste horário. Escolha outro.'], 409);
+                    }
+                    $profId = $chosen['id'];
+                    $profName = $chosen['name'];
+                } elseif (ag_has_conflict($db, $profId, $b['date'], $b['time'], $duration)) {
+                    ag_json(['error' => 'Este horário acabou de ser reservado. Escolha outro horário.'], 409);
+                }
                 $newId = 'app-' . (string) round(microtime(true) * 1000);
                 $code = 'STILO-' . random_int(1000, 9999);
                 $createdAt = gmdate('Y-m-d\TH:i:s\Z');
                 $stmt = $db->prepare('INSERT INTO appointments (id,code,service_id,service_name,service_price,service_duration,professional_id,professional_name,date,time,client_name,client_phone,client_email,notes,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
                 $stmt->execute([
                     $newId, $code,
-                    $b['serviceId'] ?? null, $b['serviceName'] ?? '', (float) ($b['servicePrice'] ?? 0), (int) ($b['serviceDuration'] ?? 30),
-                    $b['professionalId'] ?? null, $b['professionalName'] ?? '',
+                    $b['serviceId'] ?? null, $b['serviceName'] ?? '', (float) ($b['servicePrice'] ?? 0), $duration,
+                    $profId, $profName,
                     $b['date'], $b['time'],
                     $b['clientName'], $b['clientPhone'], $b['clientEmail'] ?? '', $b['notes'] ?? '',
-                    $b['status'] ?? 'confirmed', $createdAt,
+                    $status, $createdAt,
                 ]);
                 $row = $db->query('SELECT * FROM appointments WHERE id = ' . $db->quote($newId))->fetch();
                 $created = map_appointment($row);
@@ -352,9 +444,10 @@ try {
                 }
                 $newId = 'rev-' . (string) round(microtime(true) * 1000);
                 $date = $b['date'] ?? gmdate('Y-m-d');
+                $rating = max(1, min(5, (int) ($b['rating'] ?? 5))); // IMP-02: rating 1..5
                 $stmt = $db->prepare('INSERT INTO reviews (id,client_name,rating,comment,date,service_name,professional_name,verified_booking) VALUES (?,?,?,?,?,?,?,?)');
                 $stmt->execute([
-                    $newId, $b['clientName'], (int) ($b['rating'] ?? 5), $b['comment'],
+                    $newId, $b['clientName'], $rating, $b['comment'],
                     $date, $b['serviceName'] ?? '', $b['professionalName'] ?? '', !empty($b['verifiedBooking']) ? 1 : 0,
                 ]);
                 $row = $db->query('SELECT * FROM reviews WHERE id = ' . $db->quote($newId))->fetch();

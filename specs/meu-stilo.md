@@ -253,6 +253,22 @@ Persistência real em **MySQL** (não mais `localStorage`).
 
 ---
 
+## Melhorias (ciclo atual)
+
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| IMP-01 | Prevenção de agendamento duplicado no servidor | `POST /api/appointments` retorna 409 se o profissional já tiver horário sobreposto na data | ✅ |
+| IMP-02 | Validação reforçada no backend | Data `YYYY-MM-DD` e hora `HH:mm` válidas (senão 422); `status` restrito a lista; `rating` limitado a 1–5 | ✅ |
+| IMP-03 | Autoatendimento do cliente (consultar/cancelar) | `GET /api/appointments/lookup?code=&phone=` e `POST /api/appointments/cancel` (match por código + telefone); UI "Meu Agendamento" no rodapé | ✅ |
+
+### Sugestões para próximas iterações (não construídas)
+- Confirmação em duas etapas do agendamento (ex.: OTP por WhatsApp/e-mail).
+- Bloqueio/feriados e folgas pontuais por profissional no admin.
+- Notificação/toast em vez de `alert()` para erros de salvamento.
+- Exportar agendamentos/relatórios (CSV) no admin.
+- CSP (Content-Security-Policy) ajustada para fontes/imagens externas.
+- Rate limiting no login do admin (anti brute force).
+
 ## Qualidade: UI/UX, SEO e Segurança
 
 | ID | Requisito | Critério de aceite | Status |
