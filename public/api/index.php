@@ -201,8 +201,39 @@ function map_subscription(array $r): array
         'price' => (float) $r['price'],
         'status' => $r['status'],
         'provider' => $r['provider'] ?? '',
+        'mpOrderId' => $r['provider_ref'] ?? '',
         'createdAt' => $r['created_at'] ?? '',
     ];
+}
+
+/** Reembolsa uma order no Mercado Pago. Retorna [ok, error]. */
+function ag_mp_refund_order(string $orderId): array
+{
+    $token = ag_setting('mp_access_token', '');
+    if (!$token || !function_exists('curl_init')) {
+        return ['ok' => false, 'error' => 'Pagamento não configurado no servidor.'];
+    }
+    $ch = curl_init('https://api.mercadopago.com/v1/orders/' . urlencode($orderId) . '/refund');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token,
+            'X-Idempotency-Key: ' . bin2hex(random_bytes(16)),
+        ],
+        CURLOPT_POSTFIELDS => '{}',
+        CURLOPT_TIMEOUT => 25,
+    ]);
+    $res = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $data = $res ? json_decode($res, true) : null;
+    if ($res === false || $code >= 300) {
+        $msg = $data['errors'][0]['message'] ?? ($data['message'] ?? 'Falha ao reembolsar.');
+        return ['ok' => false, 'error' => $msg];
+    }
+    return ['ok' => true, 'raw' => $data];
 }
 
 function get_settings(PDO $db): array
@@ -579,7 +610,8 @@ try {
             ]);
 
             if (!empty($result['ok'])) {
-                $db->prepare('UPDATE subscriptions SET status = ? WHERE id = ?')->execute(['active', $subId]);
+                $db->prepare('UPDATE subscriptions SET status = ?, provider_ref = ? WHERE id = ?')
+                   ->execute(['active', $result['orderId'] ?? '', $subId]);
             }
             $row = $db->query('SELECT * FROM subscriptions WHERE id = ' . $db->quote($subId))->fetch();
             ag_json([
@@ -594,6 +626,25 @@ try {
 
         // ---------------- SUBSCRIPTIONS (assinatura SaaS) ----------------
         case 'subscriptions': {
+            // MP-09: reembolso pelo admin - POST /subscriptions/{id}/refund
+            if ($method === 'POST' && $id && ($segments[2] ?? '') === 'refund') {
+                ag_require_admin();
+                $row = $db->query('SELECT * FROM subscriptions WHERE id = ' . $db->quote($id))->fetch();
+                if (!$row) {
+                    ag_json(['error' => 'Assinatura não encontrada.'], 404);
+                }
+                $orderId = $row['provider_ref'] ?? '';
+                if (!$orderId) {
+                    ag_json(['error' => 'Esta assinatura não possui pagamento reembolsável.'], 422);
+                }
+                $r = ag_mp_refund_order($orderId);
+                if (empty($r['ok'])) {
+                    ag_json(['error' => $r['error'] ?? 'Falha ao reembolsar.'], 402);
+                }
+                $db->prepare("UPDATE subscriptions SET status = 'cancelled' WHERE id = ?")->execute([$id]);
+                $updated = $db->query('SELECT * FROM subscriptions WHERE id = ' . $db->quote($id))->fetch();
+                ag_json(['ok' => true, 'subscription' => map_subscription($updated)]);
+            }
             if ($method === 'GET') { // admin
                 ag_require_admin();
                 ag_json(array_map('map_subscription', $db->query('SELECT * FROM subscriptions ORDER BY created_at DESC')->fetchAll()));

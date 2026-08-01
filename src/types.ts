@@ -109,5 +109,6 @@ export interface Subscription {
   price: number;
   status: 'pending' | 'active' | 'cancelled';
   provider?: string;
+  mpOrderId?: string;
   createdAt: string;
 }

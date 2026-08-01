@@ -193,6 +193,16 @@ export default function App() {
     setSubscriptions((prev) => [sub, ...prev]);
   };
 
+  const handleRefundSubscription = async (id: string) => {
+    if (!window.confirm('Reembolsar o pagamento e cancelar esta assinatura?')) return;
+    try {
+      const res = await api.refundSubscription(id);
+      setSubscriptions((prev) => prev.map((s) => (s.id === id ? res.subscription : s)));
+    } catch (err) {
+      alert('Falha ao reembolsar: ' + (err instanceof Error ? err.message : 'erro'));
+    }
+  };
+
   // ----- Estados de carregamento / erro -----
   if (loading) {
     return (
@@ -309,6 +319,7 @@ export default function App() {
         customers={customers}
         settings={settings}
         subscriptions={subscriptions}
+        onRefundSubscription={handleRefundSubscription}
         onUpdateServices={handleUpdateServices}
         onUpdateProfessionals={handleUpdateProfessionals}
         onUpdateAppointments={handleUpdateAppointments}

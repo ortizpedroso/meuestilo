@@ -49,6 +49,7 @@ interface AdminPanelProps {
   customers: Customer[];
   settings: SalonSettings;
   subscriptions: Subscription[];
+  onRefundSubscription: (id: string) => void;
   onUpdateServices: (services: Service[]) => void;
   onUpdateProfessionals: (professionals: Professional[]) => void;
   onUpdateAppointments: (appointments: Appointment[]) => void;
@@ -66,6 +67,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   customers,
   settings,
   subscriptions,
+  onRefundSubscription,
   onUpdateServices,
   onUpdateProfessionals,
   onUpdateAppointments,
@@ -966,6 +968,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           }`}>
                             {sub.status === 'active' ? 'Ativa' : sub.status === 'cancelled' ? 'Cancelada' : 'Pendente'}
                           </span>
+                          {sub.status === 'active' && sub.mpOrderId && (
+                            <button
+                              onClick={() => onRefundSubscription(sub.id)}
+                              className="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white text-xs font-semibold transition-colors"
+                            >
+                              Reembolsar
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))

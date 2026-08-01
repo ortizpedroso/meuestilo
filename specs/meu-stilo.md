@@ -316,7 +316,7 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
 | MP-06 | `POST /api/orders` cria e processa a order (`/v1/orders`, `automatic`) | Retorna `orderId` e `orderStatus`; pagamento aprovado ativa a assinatura | ✅ validado (order `processed`/`accredited`) |
 | MP-07 | Suporte a captura em duas etapas (modo `manual` + `/capture`) | Autorizar e capturar posteriormente | ⏳ pós-MVP |
 | MP-08 | Aprovação ativa a assinatura + webhook | Order aprovada → assinatura `active`; webhook `POST /api/mp/webhook` pronto | ✅ |
-| MP-09 | Reembolso/cancelamento (`/refund`, `/cancel`) no admin | Operações pós-pagamento | ⏳ pós-MVP |
+| MP-09 | Reembolso do pagamento pelo admin | Guarda o `order_id` na assinatura; `POST /api/subscriptions/{id}/refund` (admin) chama `/v1/orders/{id}/refund`; assinatura vira `cancelled` | ✅ |
 | MP-10 | Fallback seguro | Sem `MP_PUBLIC_KEY`, cai no fluxo de assinatura `pending` sem quebrar | ✅ |
 
 > Credenciais necessárias (Secrets/`config.php`): `MP_ACCESS_TOKEN` (backend) e `MP_PUBLIC_KEY`
@@ -354,6 +354,9 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
   **Visa** funcionou (o Mastercard de teste retornou `invalid_transaction_amount` nesta conta). Com
   isso, `POST /api/orders` retornou order `processed`/`accredited` e a assinatura ficou `active`.
 - Observação: o backend usa `MP_ACCESS_TOKEN`; o frontend usa `MP_PUBLIC_KEY` (exposta em `/bootstrap`).
+- Reembolso (MP-09): ✅ validado — `POST /api/subscriptions/{id}/refund` (admin) reembolsa a order e marca
+  a assinatura como `cancelled`. Ressalva do sandbox: o MP rejeita reembolso imediato de uma order
+  recém-processada (`Post processing rejected`); após alguns segundos o reembolso é aceito (`refunded`).
 
 ### Fase 2 — E-mail de confirmação
 

@@ -124,6 +124,11 @@ export const api = {
 
   getSubscriptions: () => request<Subscription[]>('subscriptions'),
 
+  refundSubscription: (id: string) =>
+    request<{ ok: boolean; subscription: Subscription }>(`subscriptions/${encodeURIComponent(id)}/refund`, {
+      method: 'POST'
+    }),
+
   createSubscription: (payload: {
     plan: string;
     holderName: string;
