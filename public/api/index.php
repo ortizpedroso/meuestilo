@@ -639,7 +639,12 @@ try {
                 }
                 $r = ag_mp_refund_order($orderId);
                 if (empty($r['ok'])) {
-                    ag_json(['error' => $r['error'] ?? 'Falha ao reembolsar.'], 402);
+                    $err = $r['error'] ?? 'Falha ao reembolsar.';
+                    // MP rejeita reembolso imediato de order recém-processada; orienta a repetir.
+                    if (stripos($err, 'post processing') !== false || stripos($err, 'unprocessable') !== false) {
+                        $err = 'O pagamento ainda está sendo processado pelo Mercado Pago. Tente o reembolso novamente em alguns instantes.';
+                    }
+                    ag_json(['error' => $err], 402);
                 }
                 $db->prepare("UPDATE subscriptions SET status = 'cancelled' WHERE id = ?")->execute([$id]);
                 $updated = $db->query('SELECT * FROM subscriptions WHERE id = ' . $db->quote($id))->fetch();
