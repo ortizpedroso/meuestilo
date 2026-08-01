@@ -281,6 +281,15 @@ Persistência real em **MySQL** (não mais `localStorage`).
 | Q-SEC-02 | Cabeçalhos de segurança | `.htaccess` define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` (e `Permissions-Policy` no app) | ✅ |
 | Q-SEC-03 | Proteção de dados e injeção | Consultas via PDO prepared statements; `config.php` inacessível via web; CORS configurável | ✅ |
 
+## Deploy / Produção
+
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| DEP-01 | Empacotador de deploy | `npm run package` gera `build-deploy/ag_salao.zip` com `index.html`, `assets/`, `.htaccess` e `api/` | ✅ |
+| DEP-02 | Segurança do artefato | O pacote NÃO contém `config.php` (credenciais); contém `config.sample.php` | ✅ (validado) |
+| DEP-03 | Funciona na subpasta `/ag_salao/` | App + API respondem a partir do pacote extraído (base do Vite `/ag_salao/`) | ✅ (E2E no pacote: agendamento OK) |
+| DEP-04 | Guia de publicação | `docs/DEPLOY_HOSTINGER.md` cobre pacote, banco, `config.php`, MP, e-mail e cron | ✅ |
+
 ## Fases avançadas (pós-MVP) — implementadas
 
 Estas três fases foram construídas. Itens que dependem de credenciais/infra de produção têm

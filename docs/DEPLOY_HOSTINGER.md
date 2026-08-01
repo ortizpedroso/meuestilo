@@ -33,22 +33,26 @@ O banco MySQL **não** é uma pasta: ele é criado no hPanel e o `api/config.php
 
 > O `schema.sql` fica só no seu computador/repositório — **não** faça upload dele para dentro do `public_html`.
 
-## Passo 2 — Gerar o build do frontend
+## Passo 2 — Gerar o pacote de deploy
 
 Na sua máquina, na raiz do projeto:
 
 ```bash
 npm install
-npm run build
+npm run package
 ```
 
-Isso gera a pasta `dist/` já com `index.html`, `assets/`, `.htaccess` e a pasta `api/`
-(o Vite já está configurado com `base: '/ag_salao/'`).
+Isso gera `build-deploy/ag_salao.zip` (e a pasta `build-deploy/ag_salao/`) já com
+`index.html`, `assets/`, `.htaccess` e `api/`, **sem** o `config.php` local (por segurança —
+as credenciais nunca vão no pacote). O `base` do Vite já é `/ag_salao/`.
+
+> Alternativa manual: `npm run build` gera `dist/`. Se usar o `dist/` diretamente, **não** envie
+> o `dist/api/config.php` (ele pode conter credenciais locais) — crie o `config.php` no servidor.
 
 ## Passo 3 — Enviar os arquivos para a Hostinger
 
-Envie **o conteúdo de `dist/`** para `public_html/ag_salao/` (crie essa pasta no
-Gerenciador de Arquivos ou via FTP). Ao final você deve ter
+No Gerenciador de Arquivos, crie a pasta `public_html/ag_salao/`, envie o `ag_salao.zip` e
+**extraia** ali (ou envie o conteúdo de `build-deploy/ag_salao/` via FTP). Ao final você deve ter
 `public_html/ag_salao/index.html`, `.../assets/…` e `.../api/…`.
 
 ## Passo 4 — Configurar a API no servidor

@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer-core';
 
-const BASE = 'http://localhost:8080/ag_salao/';
+const BASE = process.env.E2E_BASE || 'http://localhost:8080/ag_salao/';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const browser = await puppeteer.launch({
