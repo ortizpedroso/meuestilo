@@ -1,103 +1,49 @@
-# Deploy na Hostinger — App em `public_html/ag_salao/`
+# Deploy na Hostinger — App em `public_html/meuestilo/`
 
-Guia para publicar o sistema **Ag Salão** numa subpasta do `public_html`, sem afetar o site que já está na raiz (InoveSW — `https://www.inovesw.com.br/`). Stack: **React (estático) + API PHP + MySQL**.
+Guia para publicar o **Meu Stilo** na Hostinger (InoveSW — `https://inovesw.com.br/meuestilo/`).
 
 ## Visão geral da estrutura publicada
 
 ```
 public_html/
 ├── (InoveSW na raiz — intocado)
-└── ag_salao/
-    ├── index.html          ← build do React
+└── meuestilo/
+    ├── index.html          ← build do React (npm run package:meuestilo)
     ├── assets/             ← JS/CSS do build
-    ├── .htaccess           ← fallback SPA
-    └── api/                ← backend PHP
-        ├── index.php       ← roteador REST
-        ├── db.php
-        ├── config.php      ← VOCÊ cria no servidor (credenciais reais)
+    ├── .htaccess
+    └── api/
+        ├── index.php
+        ├── config.php      ← copie de config.sample.php e preencha db_pass
         └── .htaccess
 ```
 
-O banco MySQL **não** é uma pasta: ele é criado no hPanel e o `api/config.php` guarda as credenciais de conexão.
-
----
-
-## Passo 1 — Criar o banco de dados (hPanel)
-
-1. hPanel → **Bancos de Dados MySQL**.
-2. Crie um banco (ex.: `uXXXX_agsalao`), um usuário e uma senha. Anote tudo.
-3. Associe o usuário ao banco com **todos os privilégios**.
-4. Abra o **phpMyAdmin** desse banco → aba **Importar** → envie o arquivo
-   [`database/schema.sql`](../database/schema.sql) deste repositório e execute.
-   Isso cria as tabelas e os dados iniciais (serviços, profissionais, avaliações, configurações).
-
-> O `schema.sql` fica só no seu computador/repositório — **não** faça upload dele para dentro do `public_html`.
-
-## Passo 2 — Gerar o pacote de deploy
-
-Na sua máquina, na raiz do projeto:
+## Passo 2 — Gerar o pacote
 
 ```bash
 npm install
-npm run package
+npm run package:meuestilo
 ```
 
-Isso gera `build-deploy/ag_salao.zip` (e a pasta `build-deploy/ag_salao/`) já com
-`index.html`, `assets/`, `.htaccess` e `api/`, **sem** o `config.php` local (por segurança —
-as credenciais nunca vão no pacote). O `base` do Vite já é `/ag_salao/`.
+Gera `build-deploy/meuestilo.zip`.
 
-> Alternativa manual: `npm run build` gera `dist/`. Se usar o `dist/` diretamente, **não** envie
-> o `dist/api/config.php` (ele pode conter credenciais locais) — crie o `config.php` no servidor.
+## Passo 3 — Enviar para a Hostinger
 
-## Passo 3 — Enviar os arquivos para a Hostinger
-
-No Gerenciador de Arquivos, crie a pasta `public_html/ag_salao/`, envie o `ag_salao.zip` e
-**extraia** ali (ou envie o conteúdo de `build-deploy/ag_salao/` via FTP). Ao final você deve ter
-`public_html/ag_salao/index.html`, `.../assets/…` e `.../api/…`.
+1. hPanel → Gerenciador de Arquivos → `public_html/meuestilo/`
+2. Apague arquivos antigos (não envie código-fonte com `/src/`)
+3. Envie `meuestilo.zip` e **extraia**
 
 ## Passo 4 — Configurar a API no servidor
 
-1. Dentro de `public_html/ag_salao/api/`, copie `config.sample.php` para `config.php`.
-2. Edite o `config.php` com os dados do Passo 1:
+1. Em `public_html/meuestilo/api/`, copie `config.sample.php` → **`config.php`**
+2. Abra `config.php` e preencha só **`db_pass`** (senha do MySQL no hPanel)
+3. O restante já vem configurado no `config.sample.php` do repositório
 
-```php
-return [
-    'db_host' => 'localhost',
-    'db_name' => 'uXXXX_agsalao',
-    'db_user' => 'uXXXX_agsalao',
-    'db_pass' => 'SUA_SENHA',
-    'db_charset' => 'utf8mb4',
-    'admin_password' => 'uma-senha-forte-do-painel',
-    'auth_secret' => 'uma-string-aleatoria-bem-longa',
-    'allowed_origins' => ['https://www.inovesw.com.br', 'https://inovesw.com.br'],
-
-    // Fase 1 - Mercado Pago (opcional; sem credenciais, a contratação fica "pending")
-    'mp_access_token' => 'SEU_ACCESS_TOKEN_MP',   // backend (Checkout Pro e Transparente)
-    'mp_public_key' => 'SUA_PUBLIC_KEY_MP',        // frontend (MercadoPago.js / Checkout Transparente)
-    'mp_webhook_secret' => 'SEU_WEBHOOK_SECRET',   // valida x-signature do webhook
-    'app_base_url' => 'https://www.inovesw.com.br/ag_salao',
-
-    // Fase 2 - E-mail de confirmação
-    'mail_enabled' => true,
-    'mail_from' => 'no-reply@seudominio.com',
-    'mail_from_name' => 'Nome do Salão',
-    'mail_log' => '',
-
-    // Fase 3 - Lembretes (cron)
-    'cron_key' => 'uma-chave-secreta-para-o-cron',
-];
-```
+**Login admin padrão:** senha `AdminMeuStilo2026!` (definida no sample — troque depois se quiser)
 
 ## Passo 5 — Testar
 
-- Acesse `https://www.inovesw.com.br/ag_salao/` → a landing deve carregar.
-- Faça um agendamento de teste (deve gerar um código STILO-xxxx).
-- Acesse **Admin** no topo, entre com a `admin_password` do `config.php` e confira o painel.
-- Em **Marca (White-label)**, personalize nome, logo, contatos e a cor de destaque.
-
-Ative o **SSL grátis** no hPanel para o site rodar em `https`.
-
-> Checklist completo de go-live: [`docs/PRODUCAO.md`](PRODUCAO.md).
+- https://inovesw.com.br/meuestilo/
+- https://inovesw.com.br/meuestilo/api/bootstrap → deve retornar JSON
 
 ---
 

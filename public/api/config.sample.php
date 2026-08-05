@@ -1,60 +1,55 @@
 <?php
 /**
- * Ag Salão - Configuração do backend.
+ * Ag Salão (Meu Stilo) — Configuração do backend.
  *
- * COPIE este arquivo para "config.php" (no servidor) e preencha com os dados
- * reais do seu banco MySQL criado no hPanel da Hostinger.
+ * DEPLOY Hostinger (inovesw.com.br/meuestilo):
+ * 1. No servidor: copie ESTE arquivo para "config.php" na mesma pasta (api/).
+ *    O PHP só lê config.php — config.sample.php sozinho NÃO funciona.
+ * 2. Preencha db_pass com a senha do MySQL do hPanel.
+ * 3. Caminho no servidor: public_html/meuestilo/api/config.php
  *
- * IMPORTANTE: nunca comite o config.php com credenciais reais.
+ * IMPORTANTE: nunca comite o config.php com credenciais no Git.
  */
 
 return [
     // Credenciais do banco MySQL (hPanel > Bancos de Dados MySQL)
     'db_host' => 'localhost',
-    'db_name' => 'SEU_BANCO',
-    'db_user' => 'SEU_USUARIO',
-    'db_pass' => 'SUA_SENHA',
+    'db_name' => 'u970180508_meuestilo',
+    'db_user' => 'u970180508_meuestilo',
+    'db_pass' => 'SUA_SENHA_DO_HPANEL',  // ← preencha com a senha do banco no hPanel
     'db_charset' => 'utf8mb4',
 
-    // Senha do painel administrativo (área do dono do salão)
-    'admin_password' => 'troque-esta-senha',
+    // Senha do painel administrativo (área Admin no site)
+    'admin_password' => 'AdminMeuStilo2026!',
 
-    // Segredo usado para assinar o token de sessão do admin.
-    // Gere uma string aleatória longa e única.
-    'auth_secret' => 'troque-por-uma-string-aleatoria-longa',
+    // Segredo para assinar o token de sessão do admin (não altere após ir ao ar)
+    'auth_secret' => 'k8mP2xQ9vL4nR7wJ3hF6tY1bN5cA0sD8eG2hK4m',
 
-    // Domínios liberados para chamar a API (CORS).
-    // Em produção, restrinja ao seu domínio: ['https://seudominio.com']
-    'allowed_origins' => ['https://seudominio.com'],
+    // CORS — domínios que podem chamar a API
+    'allowed_origins' => [
+        'https://inovesw.com.br',
+        'https://www.inovesw.com.br',
+    ],
 
-    // ---------- Fase 1: Mercado Pago ----------
-    // Access Token do Mercado Pago (backend). Sem ele, a contratação apenas registra
-    // a assinatura como "pending" (fallback). Pode vir da env MP_ACCESS_TOKEN.
+    // ---------- Fase 1: Mercado Pago (opcional) ----------
     'mp_access_token' => '',
-    // Public Key do Mercado Pago (frontend, MercadoPago.js). Pode vir da env MP_PUBLIC_KEY.
     'mp_public_key' => '',
-    // URL base pública do app (para back_urls/webhook do MP). Ex.: https://seudominio.com/ag_salao
-    'app_base_url' => '',
-    // Secret do webhook (painel MP → Suas integrações → Webhooks). Valida header x-signature.
+    'app_base_url' => 'https://inovesw.com.br/meuestilo',
     'mp_webhook_secret' => '',
 
-    // Rate limit do login admin (tentativas / janela em segundos)
+    // Rate limit do login admin
     'login_rate_limit_max' => 5,
     'login_rate_limit_window' => 900,
-    // Só confiar em X-Forwarded-For se estiver atrás de proxy/CDN confiável
     'trust_proxy_headers' => false,
 
-    // ---------- Fase 2: E-mail ----------
-    'mail_enabled' => false,               // liga o envio real via mail() do PHP
-    'mail_from' => 'no-reply@seudominio.com',
-    'mail_from_name' => 'Ag Salão',
-    // Caminho de arquivo para registrar os e-mails gerados (auditoria/teste). Vazio = desativado.
+    // ---------- Fase 2: E-mail (opcional) ----------
+    'mail_enabled' => false,
+    'mail_from' => 'no-reply@inovesw.com.br',
+    'mail_from_name' => 'Meu Stilo',
     'mail_log' => '',
 
-    // ---------- Fase 3: Lembretes (cron) ----------
-    // Chave secreta exigida no endpoint /api/cron/reminders?key=...
-    'cron_key' => 'troque-esta-chave-do-cron',
+    // ---------- Fase 3: Lembretes cron (opcional) ----------
+    'cron_key' => 'cron-meuestilo-2026-inovesw',
 
-    // Depuração: se true, respostas de erro 500 incluem detalhes (NÃO usar em produção).
     'debug' => false,
 ];
