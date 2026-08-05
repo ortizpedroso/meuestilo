@@ -1,0 +1,50 @@
+name: Deploy FTP (Hostinger)
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'specs/**'
+      - 'AGENTS.md'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar e gerar build meuestilo
+        run: |
+          npm ci
+          npm run package:meuestilo
+
+      - name: Enviar para Hostinger (FTP)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }}
+          protocol: ftp
+          local-dir: build-deploy/meuestilo/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/config.php
+            api/config.php
+
+      - name: Smoke test pós-deploy
+        run: |
+          sleep 15
+          curl -sf "https://inovesw.com.br/meuestilo/api/bootstrap" | head -c 80
+          echo ""
+          curl -sf "https://inovesw.com.br/meuestilo/" | grep -q '/meuestilo/assets/' && echo "Landing OK"

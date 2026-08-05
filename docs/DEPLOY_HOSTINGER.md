@@ -47,6 +47,8 @@ Gera `build-deploy/meuestilo.zip`.
 
 ---
 
+> Deploy automático via FTP: [`docs/DEPLOY_FTP.md`](DEPLOY_FTP.md)
+
 ## Deploy via GitHub (alternativa)
 
 A Hostinger só faz `git pull` — ela **não roda `npm run build`** no plano compartilhado.
