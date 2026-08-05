@@ -49,6 +49,7 @@ Se tiver dúvida, comece com `/public_html/meuestilo/`.
 | `FTP_PASSWORD` | Senha da conta FTP (hPanel → Mudar senha) | ✅ |
 | `FTP_PORT` | `21` | recomendado |
 | `FTP_SERVER_DIR` | `/domains/inovesw.com.br/public_html/meuestilo/` | ✅ |
+| `FTP_PROTOCOL` | `ftp` ou `ftps` (opcional; padrão `ftp`) | opcional |
 
 > Caminho completo no hPanel: `/home/u970180508/domains/inovesw.com.br/public_html/meuestilo`  
 > No FTP use: `/domains/inovesw.com.br/public_html/meuestilo/` (sem `/home/u970180508` no início).  
@@ -57,6 +58,20 @@ Se tiver dúvida, comece com `/public_html/meuestilo/`.
 ⚠️ O nome tem que ser **exatamente** `FTP_HOST` (não `FTP_SERVER` nem `HOST`).
 
 ---
+
+## Troubleshooting
+
+### Erro `Timeout (control socket)`
+
+A Hostinger às vezes **bloqueia temporariamente** os IPs do GitHub Actions. O workflow já tenta **3 vezes** (com pausa) e na 3ª usa **FTPS**.
+
+1. **Re-execute o workflow:** Actions → Deploy FTP (Hostinger) → **Run workflow**
+2. Confirme `FTP_HOST` = `ftp.inovesw.com.br` (sem `https://`)
+3. Se persistir, crie o secret `FTP_PROTOCOL` = `ftps` e rode de novo
+4. No hPanel, confira se a conta FTP está ativa e a senha correta
+5. Como último recurso: upload manual de `build-deploy/meuestilo.zip` no Gerenciador de Arquivos
+
+### Erro `server-dir must be a folder (must end with /)`
 
 ## 3. Primeira vez no servidor
 
