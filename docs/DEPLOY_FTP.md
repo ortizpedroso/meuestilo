@@ -44,11 +44,14 @@ Se tiver dúvida, comece com `/public_html/meuestilo/`.
 
 | Nome do secret | Valor | Obrigatório |
 |----------------|-------|-------------|
-| `FTP_HOST` | Host FTP do hPanel (ex.: `ftp.inovesw.com.br`) | ✅ |
-| `FTP_USER` | Usuário FTP | ✅ |
-| `FTP_PASSWORD` | Senha FTP | ✅ |
+| `FTP_HOST` | `ftp.inovesw.com.br` | ✅ |
+| `FTP_USER` | `u970180508.meuestilo` | ✅ |
+| `FTP_PASSWORD` | Senha da conta FTP (hPanel → Mudar senha) | ✅ |
 | `FTP_PORT` | `21` | recomendado |
-| `FTP_SERVER_DIR` | `/public_html/meuestilo/` | ✅ |
+| `FTP_SERVER_DIR` | `/domains/inovesw.com.br/public_html/meuestilo/` | ✅ |
+
+> Caminho completo no hPanel: `/home/u970180508/domains/inovesw.com.br/public_html/meuestilo`  
+> No FTP use: `/domains/inovesw.com.br/public_html/meuestilo/` (sem `/home/u970180508` no início).
 
 ⚠️ O nome tem que ser **exatamente** `FTP_HOST` (não `FTP_SERVER` nem `HOST`).
 
