@@ -30,6 +30,7 @@ export function SeoHead({ settings }: SeoHeadProps) {
     setMeta('description', desc);
     setMeta('og:title', title, true);
     setMeta('og:description', desc, true);
+    setMeta('og:locale', 'pt_BR', true);
     setMeta('twitter:title', title);
     setMeta('twitter:description', desc);
 

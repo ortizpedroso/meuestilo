@@ -73,7 +73,7 @@ export function hasPrivacyConsent(): boolean {
   try {
     return localStorage.getItem(CONSENT_KEY) === '1';
   } catch {
-    return true;
+    return false;
   }
 }
 

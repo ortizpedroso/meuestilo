@@ -3,10 +3,15 @@
  * Helpers de segurança: rate limiting e validação de webhook do Mercado Pago.
  */
 
-/** IP do cliente (considera proxy reverso comum). */
+/** IP do cliente. Em hospedagem compartilhada, REMOTE_ADDR é confiável; X-Forwarded-For só se trust_proxy_headers. */
 function ag_client_ip(): string
 {
-    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $key) {
+    $trustProxy = (bool) ag_setting('trust_proxy_headers', false);
+    $candidates = ['HTTP_CF_CONNECTING_IP', 'REMOTE_ADDR'];
+    if ($trustProxy) {
+        $candidates[] = 'HTTP_X_FORWARDED_FOR';
+    }
+    foreach ($candidates as $key) {
         $val = $_SERVER[$key] ?? '';
         if ($val) {
             $ip = trim(explode(',', $val)[0]);

@@ -41,6 +41,8 @@ return [
     // Rate limit do login admin (tentativas / janela em segundos)
     'login_rate_limit_max' => 5,
     'login_rate_limit_window' => 900,
+    // Só confiar em X-Forwarded-For se estiver atrás de proxy/CDN confiável
+    'trust_proxy_headers' => false,
 
     // ---------- Fase 2: E-mail ----------
     'mail_enabled' => false,               // liga o envio real via mail() do PHP
