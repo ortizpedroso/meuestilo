@@ -51,7 +51,8 @@ Se tiver dúvida, comece com `/public_html/meuestilo/`.
 | `FTP_SERVER_DIR` | `/domains/inovesw.com.br/public_html/meuestilo/` | ✅ |
 
 > Caminho completo no hPanel: `/home/u970180508/domains/inovesw.com.br/public_html/meuestilo`  
-> No FTP use: `/domains/inovesw.com.br/public_html/meuestilo/` (sem `/home/u970180508` no início).
+> No FTP use: `/domains/inovesw.com.br/public_html/meuestilo/` (sem `/home/u970180508` no início).  
+> **Deve terminar com `/`** — o workflow corrige automaticamente se você esquecer a barra final.
 
 ⚠️ O nome tem que ser **exatamente** `FTP_HOST` (não `FTP_SERVER` nem `HOST`).
 

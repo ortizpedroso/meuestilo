@@ -26,6 +26,7 @@ jobs:
           npm run package:meuestilo
 
       - name: Verificar secrets FTP
+        id: ftp-secrets
         run: |
           missing=0
           if [ -z "${{ secrets.FTP_HOST }}" ]; then echo "::error::Secret FTP_HOST não configurado. Vá em Settings → Secrets → Actions"; missing=1; fi
@@ -33,10 +34,15 @@ jobs:
           if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "::error::Secret FTP_PASSWORD não configurado"; missing=1; fi
           if [ -z "${{ secrets.FTP_SERVER_DIR }}" ]; then echo "::error::Secret FTP_SERVER_DIR não configurado (ex: /public_html/meuestilo/)"; missing=1; fi
           if [ "$missing" -eq 1 ]; then exit 1; fi
-          echo "Secrets FTP: OK"
+
+          # FTP-Deploy-Action exige server-dir terminando com /
+          server_dir="${{ secrets.FTP_SERVER_DIR }}"
+          server_dir="${server_dir%/}/"
+          echo "server_dir=$server_dir" >> "$GITHUB_OUTPUT"
+          echo "Secrets FTP: OK (server-dir normalizado com barra final)"
 
       - name: Enviar para Hostinger (FTP)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
@@ -44,7 +50,7 @@ jobs:
           port: ${{ secrets.FTP_PORT || 21 }}
           protocol: ftp
           local-dir: build-deploy/meuestilo/
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          server-dir: ${{ steps.ftp-secrets.outputs.server_dir }}
           dangerous-clean-slate: false
           exclude: |
             **/.git*
