@@ -1,10 +1,7 @@
 # Ag Salão (Meu Stilo) — Especificação do Sistema de Agendamento para Salões
 
-> **Status:** Pronto para produção (código). Validação em Hostinger: `https://www.inovesw.com.br/ag_salao/` (subpasta do site InoveSW).
-> **Arquitetura:** Frontend React (SPA) + Backend PHP + Banco MySQL.
-> **Deploy alvo:** subpasta `public_html/ag_salao/` (Hostinger, hospedagem compartilhada).
-> Empacotamento: `npm run package` → `build-deploy/ag_salao.zip` (sem credenciais).
-> Teste remoto: `HOSTINGER_BASE_URL=https://www.inovesw.com.br/ag_salao node scripts/hostinger-smoke.mjs`
+> **Status:** Pronto para produção. Publicado em **https://inovesw.com.br/meuestilo/** (subpasta InoveSW).
+> **Build:** `npm run package:meuestilo` → `build-deploy/meuestilo.zip`
 > Guias: [`docs/DEPLOY_HOSTINGER.md`](../docs/DEPLOY_HOSTINGER.md) · [`docs/PRODUCAO.md`](../docs/PRODUCAO.md).
 
 ## Objetivo
