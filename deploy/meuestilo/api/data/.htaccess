@@ -1,0 +1,2 @@
+# Dados internos da API (rate limit etc.) — nunca acessíveis via web.
+Require all denied

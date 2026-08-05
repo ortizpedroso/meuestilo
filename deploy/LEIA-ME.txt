@@ -1,0 +1,38 @@
+================================================================================
+  MEU STILO — ARQUIVOS PRONTOS PARA A HOSTINGER (inovesw.com.br/meuestilo)
+================================================================================
+
+⚠️  NÃO envie a pasta "src/" nem o index.html da raiz do projeto!
+    Use SOMENTE os arquivos DESTA PASTA (deploy/meuestilo/).
+
+PASSO A PASSO NO hPanel
+-----------------------
+1. Gerenciador de Arquivos → public_html/meuestilo/
+2. APAGUE TUDO que estiver dentro (index.html antigo, pasta src/, etc.)
+3. Envie o conteúdo DESTA PASTA para meuestilo/:
+      - index.html
+      - assets/          (pasta inteira)
+      - .htaccess
+      - robots.txt
+      - api/             (pasta inteira)
+
+4. Em public_html/meuestilo/api/:
+      a) Copie config.sample.php → config.php
+      b) Abra config.php e troque SUA_SENHA_DO_HPANEL pela senha do MySQL
+
+5. Teste:
+      https://inovesw.com.br/meuestilo/
+      https://inovesw.com.br/meuestilo/api/bootstrap
+
+COMO SABER SE ESTÁ CERTO
+--------------------------
+Abra o index.html no servidor. Deve ter esta linha:
+   src="/meuestilo/assets/index-....js"
+
+Se aparecer src="/src/main.tsx" → arquivo ERRADO (código-fonte).
+
+LOGIN ADMIN (padrão)
+--------------------
+Senha: AdminMeuStilo2026!
+
+Ou use o arquivo meuestilo.zip na raiz deploy/ (mesmo conteúdo, compactado).

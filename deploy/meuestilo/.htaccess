@@ -1,0 +1,35 @@
+# Ag Salão - App (pasta /ag_salao no public_html)
+# SPA de página única (sem rotas de cliente). Mantém a API intacta e
+# faz fallback do restante para o index.html.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Não interferir na API (deixa a pasta /api com seu próprio .htaccess)
+    RewriteRule ^api(/.*)?$ - [L]
+
+    # Arquivos e pastas reais são servidos normalmente
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Qualquer outra rota cai no index.html do app
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Cache dos assets estáticos (JS/CSS com hash no nome)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>
+
+# Cabeçalhos de segurança (boas práticas)
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://sdk.mercadopago.com https://*.mlstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.mlstatic.com; font-src 'self' https://fonts.gstatic.com https://*.mlstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://api.mercadopago.com https://*.mercadopago.com https://*.mercadopago.com.br https://*.mlstatic.com; frame-src https://*.mercadopago.com https://*.mercadopago.com.br https://*.mlstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+</IfModule>
