@@ -1,10 +1,11 @@
 # Ag Salão (Meu Stilo) — Especificação do Sistema de Agendamento para Salões
 
-> **Status:** MVP + fases pós-MVP (Mercado Pago, e-mail e cron de lembretes) implementadas e testadas de ponta a ponta.
+> **Status:** Pronto para produção (código). Validação em Hostinger: `https://www.inovesw.com.br/ag_salao/` (subpasta do site InoveSW).
 > **Arquitetura:** Frontend React (SPA) + Backend PHP + Banco MySQL.
 > **Deploy alvo:** subpasta `public_html/ag_salao/` (Hostinger, hospedagem compartilhada).
 > Empacotamento: `npm run package` → `build-deploy/ag_salao.zip` (sem credenciais).
-> Guia de publicação: [`docs/DEPLOY_HOSTINGER.md`](../docs/DEPLOY_HOSTINGER.md).
+> Teste remoto: `HOSTINGER_BASE_URL=https://www.inovesw.com.br/ag_salao node scripts/hostinger-smoke.mjs`
+> Guias: [`docs/DEPLOY_HOSTINGER.md`](../docs/DEPLOY_HOSTINGER.md) · [`docs/PRODUCAO.md`](../docs/PRODUCAO.md).
 
 ## Objetivo
 
@@ -338,6 +339,40 @@ Guia operacional: [`docs/PRODUCAO.md`](../docs/PRODUCAO.md).
 | DEP-04 | Guia de publicação | `docs/DEPLOY_HOSTINGER.md` cobre pacote, banco, `config.php`, MP, e-mail e cron | ✅ |
 | DEP-05 | Instruções pós-empacotamento | Ao concluir, o script orienta extrair em `public_html/`, criar `config.php` e importar `schema.sql` | ✅ |
 | DEP-06 | Checklist de produção | `docs/PRODUCAO.md` lista configuração do operador e testes pós-deploy | ✅ |
+| DEP-07 | Smoke test Hostinger | `scripts/hostinger-smoke.mjs` valida landing, API, robots, segurança e agendamento | ✅ (script pronto) |
+
+## Validação em hospedagem compartilhada (Hostinger)
+
+Ambiente alvo: **InoveSW** — `https://www.inovesw.com.br/ag_salao/` (subpasta; site raiz intocado).
+
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| HOST-01 | Pacote gerado | `npm run package` → `build-deploy/ag_salao.zip` sem `config.php` | ✅ |
+| HOST-02 | Upload no hPanel | Zip extraído em `public_html/ag_salao/` com `index.html`, `assets/`, `api/` | ⏳ operador |
+| HOST-03 | Banco MySQL | `schema.sql` importado; `config.php` com credenciais do hPanel | ⏳ operador |
+| HOST-04 | Landing pública | `GET /ag_salao/` retorna 200 com SPA React | ⏳ pós-deploy |
+| HOST-05 | API bootstrap | `GET /ag_salao/api/bootstrap` retorna serviços e settings | ⏳ pós-deploy |
+| HOST-06 | Agendamento E2E | `POST /api/appointments` cria código STILO-XXXX em produção | ⏳ pós-deploy |
+| HOST-07 | Admin login | `POST /api/login` com senha do `config.php` retorna token | ⏳ pós-deploy |
+| HOST-08 | Smoke automatizado | `node scripts/hostinger-smoke.mjs` passa sem falhas | ⏳ pós-deploy |
+
+**Comandos de validação (após publicar):**
+
+```bash
+npm run package
+# upload build-deploy/ag_salao.zip → public_html/ → extrair
+
+HOSTINGER_BASE_URL=https://www.inovesw.com.br/ag_salao \
+HOSTINGER_ADMIN_PASSWORD=sua-senha-admin \
+node scripts/hostinger-smoke.mjs
+```
+
+**`config.php` mínimo para InoveSW:**
+
+```php
+'allowed_origins' => ['https://www.inovesw.com.br', 'https://inovesw.com.br'],
+'app_base_url' => 'https://www.inovesw.com.br/ag_salao',
+```
 
 ## Fases avançadas (pós-MVP) — implementadas
 

@@ -35,18 +35,30 @@ Guia para publicar e operar o sistema em ambiente real (Hostinger).
 - [ ] `mail_enabled`, `mail_from` e teste de envio
 - [ ] `cron_key` + Cron Job diário no hPanel
 
-## 4. Deploy
+## 4. Deploy (InoveSW / Hostinger)
+
+Domínio alvo: **https://www.inovesw.com.br/ag_salao/**
 
 ```bash
 npm install
 npm run package
 ```
 
-Envie `build-deploy/ag_salao.zip` para `public_html/` e extraia.
+1. hPanel → **Gerenciador de Arquivos** → `public_html/`
+2. Envie `build-deploy/ag_salao.zip` e **extraia** (gera `public_html/ag_salao/`)
+3. Em `public_html/ag_salao/api/`, copie `config.sample.php` → `config.php` e preencha:
+   - Credenciais MySQL do hPanel
+   - `allowed_origins` → `['https://www.inovesw.com.br', 'https://inovesw.com.br']`
+   - `app_base_url` → `https://www.inovesw.com.br/ag_salao`
+4. phpMyAdmin → importe `database/schema.sql`
 
-## 5. Teste de fumaça pós-deploy
+## 5. Teste automatizado pós-deploy
 
-- [ ] Landing em `https://seudominio.com/ag_salao/`
+```bash
+HOSTINGER_BASE_URL=https://www.inovesw.com.br/ag_salao \
+HOSTINGER_ADMIN_PASSWORD=sua-senha-admin \
+node scripts/hostinger-smoke.mjs
+```
 - [ ] Agendamento gera código STILO-XXXX
 - [ ] Admin login funciona
 - [ ] Banner de privacidade aparece na primeira visita
