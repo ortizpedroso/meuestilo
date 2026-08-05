@@ -100,6 +100,8 @@ export const api = {
   createAppointment: (app: Omit<Appointment, 'id' | 'code' | 'createdAt'>) =>
     request<Appointment>('appointments', { method: 'POST', body: JSON.stringify(app) }),
 
+  getAppointments: () => request<Appointment[]>('appointments'),
+
   // IMP-03: autoatendimento do cliente (consultar/cancelar por código + telefone)
   lookupAppointment: (code: string, phone: string) =>
     request<Appointment>(

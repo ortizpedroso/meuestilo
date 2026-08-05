@@ -44,6 +44,9 @@ try {
   if (res.status === 200 && typeof data === 'object') {
     ok('Bootstrap retorna services', Array.isArray(data.services) && data.services.length > 0, `${data.services?.length || 0} serviços`);
     ok('Bootstrap retorna settings', !!data.settings?.name, data.settings?.name);
+    const apps = data.appointments || [];
+    const hasPii = apps.some((a) => a.clientPhone || a.clientName || a.clientEmail);
+    ok('Bootstrap sem dados de clientes', !hasPii, hasPii ? 'PII exposta' : `${apps.length} slot(s)`);
   } else if (res.status === 500) {
     ok('config.php configurado', false, typeof data === 'object' ? data.error : 'erro 500');
   }

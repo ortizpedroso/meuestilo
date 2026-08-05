@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { api } from './services/api';
+import { api, isLoggedIn } from './services/api';
 import { deriveCustomers } from './utils/customers';
 import { applyBrandTheme } from './utils/theme';
 import { INITIAL_SALON_SETTINGS } from './data/initialData';
@@ -54,7 +54,7 @@ export default function App() {
 
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => api ? false : false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => isLoggedIn());
 
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isMyApptOpen, setIsMyApptOpen] = useState(false);
@@ -93,10 +93,11 @@ export default function App() {
     applyBrandTheme(settings.themeColor);
   }, [settings.themeColor]);
 
-  // Carrega assinaturas quando o admin loga
+  // Carrega assinaturas e agendamentos completos quando o admin loga
   useEffect(() => {
     if (isAdminLoggedIn) {
       api.getSubscriptions().then(setSubscriptions).catch(() => setSubscriptions([]));
+      api.getAppointments().then(setAppointments).catch(() => setAppointments([]));
     }
   }, [isAdminLoggedIn]);
 
@@ -148,6 +149,7 @@ export default function App() {
     api.logout();
     setIsAdminLoggedIn(false);
     setIsAdminOpen(false);
+    loadData();
   };
 
   const persist = async (fn: () => Promise<unknown>, rollback: () => void) => {

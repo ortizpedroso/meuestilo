@@ -97,6 +97,14 @@ function ag_expected_token(): string
 
 function ag_require_admin(): void
 {
+    if (!ag_is_admin()) {
+        ag_json(['error' => 'Não autorizado.'], 401);
+    }
+}
+
+/** Verifica token admin sem encerrar a requisição. */
+function ag_is_admin(): bool
+{
     $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     if (!$header && function_exists('apache_request_headers')) {
         $headers = apache_request_headers();
@@ -106,7 +114,5 @@ function ag_require_admin(): void
     if (preg_match('/Bearer\s+(.+)/i', $header, $m)) {
         $token = trim($m[1]);
     }
-    if (!hash_equals(ag_expected_token(), $token)) {
-        ag_json(['error' => 'Não autorizado.'], 401);
-    }
+    return $token !== '' && hash_equals(ag_expected_token(), $token);
 }
