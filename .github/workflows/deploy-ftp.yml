@@ -12,6 +12,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -35,28 +36,96 @@ jobs:
           if [ -z "${{ secrets.FTP_SERVER_DIR }}" ]; then echo "::error::Secret FTP_SERVER_DIR não configurado (ex: /public_html/meuestilo/)"; missing=1; fi
           if [ "$missing" -eq 1 ]; then exit 1; fi
 
-          # FTP-Deploy-Action exige server-dir terminando com /
           server_dir="${{ secrets.FTP_SERVER_DIR }}"
           server_dir="${server_dir%/}/"
           echo "server_dir=$server_dir" >> "$GITHUB_OUTPUT"
-          echo "Secrets FTP: OK (server-dir normalizado com barra final)"
 
-      - name: Enviar para Hostinger (FTP)
+          port="${{ secrets.FTP_PORT }}"
+          if [ -z "$port" ]; then port="21"; fi
+          echo "port=$port" >> "$GITHUB_OUTPUT"
+
+          protocol="${{ secrets.FTP_PROTOCOL }}"
+          if [ -z "$protocol" ]; then protocol="ftp"; fi
+          echo "protocol=$protocol" >> "$GITHUB_OUTPUT"
+          echo "Secrets FTP: OK (server-dir=$server_dir, protocol=$protocol, port=$port)"
+
+      - name: Diagnosticar conectividade FTP
+        run: |
+          HOST="${{ secrets.FTP_HOST }}"
+          PORT="${{ steps.ftp-secrets.outputs.port }}"
+          echo "Testando $HOST:$PORT ..."
+          getent hosts "$HOST" || true
+          if timeout 20 bash -c "echo > /dev/tcp/$HOST/$PORT" 2>/dev/null; then
+            echo "Porta acessível a partir do runner GitHub"
+          else
+            echo "::warning::Porta $PORT não respondeu em 20s. Pode ser bloqueio temporário da Hostinger — o workflow tentará até 3 vezes."
+          fi
+
+      - name: Enviar para Hostinger — tentativa 1/3
+        id: ftp_try_1
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
+        with: &ftp-deploy
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || 21 }}
-          protocol: ftp
+          port: ${{ steps.ftp-secrets.outputs.port }}
+          protocol: ${{ steps.ftp-secrets.outputs.protocol }}
           local-dir: build-deploy/meuestilo/
           server-dir: ${{ steps.ftp-secrets.outputs.server_dir }}
+          timeout: 180000
           dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
             **/config.php
             api/config.php
+
+      - name: Aguardar entre tentativas
+        if: steps.ftp_try_1.outcome != 'success'
+        run: sleep 45
+
+      - name: Enviar para Hostinger — tentativa 2/3
+        id: ftp_try_2
+        if: steps.ftp_try_1.outcome != 'success'
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with: *ftp-deploy
+
+      - name: Aguardar antes da tentativa FTPS
+        if: steps.ftp_try_1.outcome != 'success' && steps.ftp_try_2.outcome != 'success'
+        run: sleep 45
+
+      - name: Enviar para Hostinger — tentativa 3/3 (FTPS)
+        id: ftp_try_3
+        if: steps.ftp_try_1.outcome != 'success' && steps.ftp_try_2.outcome != 'success'
+        continue-on-error: true
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ steps.ftp-secrets.outputs.port }}
+          protocol: ftps
+          security: loose
+          local-dir: build-deploy/meuestilo/
+          server-dir: ${{ steps.ftp-secrets.outputs.server_dir }}
+          timeout: 180000
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/config.php
+            api/config.php
+
+      - name: Verificar deploy FTP
+        run: |
+          if [ "${{ steps.ftp_try_1.outcome }}" = "success" ] || [ "${{ steps.ftp_try_2.outcome }}" = "success" ] || [ "${{ steps.ftp_try_3.outcome }}" = "success" ]; then
+            echo "Deploy FTP concluído com sucesso"
+            exit 0
+          fi
+          echo "::error::Deploy FTP falhou após 3 tentativas (timeout/conexão). Veja docs/DEPLOY_FTP.md — seção Timeout."
+          exit 1
 
       - name: Smoke test pós-deploy
         run: |
