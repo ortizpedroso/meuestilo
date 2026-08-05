@@ -5,7 +5,7 @@
  *   HOSTINGER_BASE_URL=https://www.inovesw.com.br/ag_salao node scripts/hostinger-smoke.mjs
  *   HOSTINGER_ADMIN_PASSWORD=sua-senha node scripts/hostinger-smoke.mjs
  */
-const BASE = (process.env.HOSTINGER_BASE_URL || 'https://www.inovesw.com.br/ag_salao').replace(/\/$/, '');
+const BASE = (process.env.HOSTINGER_BASE_URL || 'https://inovesw.com.br/meuestilo').replace(/\/$/, '');
 const ADMIN_PASS = process.env.HOSTINGER_ADMIN_PASSWORD || '';
 
 const tests = [];

@@ -37,20 +37,23 @@ Guia para publicar e operar o sistema em ambiente real (Hostinger).
 
 ## 4. Deploy (InoveSW / Hostinger)
 
-Domínio alvo: **https://www.inovesw.com.br/ag_salao/**
+Domínio atual: **https://inovesw.com.br/meuestilo/**
 
 ```bash
 npm install
-npm run package
+npm run package:meuestilo   # gera build-deploy/meuestilo.zip
 ```
 
-1. hPanel → **Gerenciador de Arquivos** → `public_html/`
-2. Envie `build-deploy/ag_salao.zip` e **extraia** (gera `public_html/ag_salao/`)
-3. Em `public_html/ag_salao/api/`, copie `config.sample.php` → `config.php` e preencha:
+> Para outra subpasta: `VITE_BASE=/sua-pasta/ npm run package`
+
+1. hPanel → **Gerenciador de Arquivos** → `public_html/meuestilo/`
+2. **Apague** arquivos antigos (não envie o código-fonte — use só o zip do build!)
+3. Envie `build-deploy/meuestilo.zip` e **extraia**
+4. Em `public_html/meuestilo/api/`, copie `config.sample.php` → `config.php`:
    - Credenciais MySQL do hPanel
-   - `allowed_origins` → `['https://www.inovesw.com.br', 'https://inovesw.com.br']`
-   - `app_base_url` → `https://www.inovesw.com.br/ag_salao`
-4. phpMyAdmin → importe `database/schema.sql`
+   - `allowed_origins` → `['https://inovesw.com.br', 'https://www.inovesw.com.br']`
+   - `app_base_url` → `https://inovesw.com.br/meuestilo`
+5. phpMyAdmin → importe `database/schema.sql` (se ainda não importou)
 
 ## 5. Teste automatizado pós-deploy
 
