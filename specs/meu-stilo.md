@@ -1,9 +1,10 @@
 # Ag Salão (Meu Stilo) — Especificação do Sistema de Agendamento para Salões
 
-> **Status:** MVP implementado e testado de ponta a ponta.
+> **Status:** MVP + fases pós-MVP (Mercado Pago, e-mail e cron de lembretes) implementadas e testadas de ponta a ponta.
 > **Arquitetura:** Frontend React (SPA) + Backend PHP + Banco MySQL.
 > **Deploy alvo:** subpasta `public_html/ag_salao/` (Hostinger, hospedagem compartilhada).
-> Guia de publicação: [`docs/DEPLOY_HOSTINGER.md`](DEPLOY_HOSTINGER.md).
+> Empacotamento: `npm run package` → `build-deploy/ag_salao.zip` (sem credenciais).
+> Guia de publicação: [`docs/DEPLOY_HOSTINGER.md`](../docs/DEPLOY_HOSTINGER.md).
 
 ## Objetivo
 
@@ -25,7 +26,8 @@ a própria marca (nome, logo, cores, contatos).
 | Ícones/animação | lucide-react, motion | — |
 
 Endpoints principais: `bootstrap`, `login`, `services`, `professionals`, `appointments`,
-`reviews`, `settings`, `customers` (derivados), `subscriptions`.
+`reviews`, `settings`, `customers` (derivados), `subscriptions`, `orders`, `mp/webhook`,
+`cron/reminders`.
 
 ---
 
@@ -128,7 +130,8 @@ Progressiva Orgânica, Barba com Toalha Quente, Manicure Completa, Pedicure Comp
 | NT-01 | Exibir prévia do e-mail de confirmação ao cliente após o agendamento | ✅ |
 | NT-02 | Permitir lembrete ao cliente via WhatsApp (a partir do painel admin) | ✅ |
 
-> Envio real de e-mail (SMTP) e lembrete automático (cron) estão em "Fora do escopo do MVP (Próximas fases)".
+> Envio real de e-mail e lembrete automático (cron) foram implementados nas Fases 2 e 3 (abaixo), com
+> fallback seguro quando as credenciais não estão configuradas.
 
 ### 9. Avaliações
 
@@ -164,9 +167,10 @@ Persistência real em **MySQL** (não mais `localStorage`).
 | MN-01 | Quadro de funcionalidades + planos na página | ✅ (seção "Planos") |
 | MN-02 | Contratação de assinatura (registra no banco) | ✅ (status `pending`) |
 | MN-03 | Painel do proprietário vê contratações recebidas | ✅ |
-| MN-04 | Estrutura preparada para pagamento (gancho de checkout) | ✅ (`POST /api/subscriptions` retorna `checkoutUrl`) |
+| MN-04 | Pagamento integrado (Checkout Pro + Transparente) | ✅ (`POST /api/subscriptions` / `POST /api/orders`; ver Fase 1) |
 
-> A integração de pagamento com o **Mercado Pago** está em "Fora do escopo do MVP (Próximas fases)".
+> Detalhes da integração com **Mercado Pago** (Checkout Pro, Transparente, webhook e reembolso) em
+> "Fases avançadas (pós-MVP) — implementadas" abaixo.
 
 ### 13. Dados de Demonstração (seed)
 
@@ -227,10 +231,12 @@ Persistência real em **MySQL** (não mais `localStorage`).
 - [x] Marca (nome, logo, banner, contatos, PIX) editável
 - [x] Cor de destaque aplicada ao site em tempo real
 
-### Integrações (MVP)
+### Integrações
 - [x] Botão WhatsApp com resumo do agendamento
 - [x] Prévia do e-mail de confirmação exibida ao cliente
+- [x] Envio real de e-mail de confirmação (Fase 2; com `mail_enabled`)
 - [x] Lembrete manual ao cliente via WhatsApp no painel admin
+- [x] Lembretes automáticos por cron (Fase 3; com `cron_key`)
 
 ### Avaliações e Compartilhamento
 - [x] Clientes podem avaliar o atendimento
@@ -241,10 +247,20 @@ Persistência real em **MySQL** (não mais `localStorage`).
 - [x] Clientes, agendamentos, serviços, profissionais e configurações persistidos em MySQL
 - [x] Dados de demonstração criados pelo seed
 
-### Monetização (MVP)
+### Monetização (MVP + MP)
 - [x] Quadro de funcionalidades + contratação de assinatura
 - [x] Contratações registradas e visíveis no painel
-- [x] Estrutura de checkout preparada (gancho para provedor de pagamento)
+- [x] Checkout Pro (redirect) e Checkout Transparente (cartão no site) integrados
+- [x] Webhook e reembolso pelo admin
+
+### Deploy
+- [x] Empacotador `npm run package` com validações de segurança e integridade do build
+- [x] Guia de publicação em `docs/DEPLOY_HOSTINGER.md`
+
+### Melhorias recentes
+- [x] Anti double-booking no servidor (IMP-01)
+- [x] Validação reforçada no backend (IMP-02)
+- [x] Autoatendimento do cliente — consultar/cancelar por código + telefone (IMP-03)
 
 ### Qualidade Geral
 - [x] Aplicativo funcional sem erros críticos (bug de loop do localStorage eliminado)
@@ -253,7 +269,7 @@ Persistência real em **MySQL** (não mais `localStorage`).
 
 ---
 
-## Melhorias (ciclo atual)
+## Melhorias (ciclo concluído)
 
 | ID | Requisito | Critério de aceite | Status |
 |----|-----------|--------------------|--------|
@@ -285,10 +301,11 @@ Persistência real em **MySQL** (não mais `localStorage`).
 
 | ID | Requisito | Critério de aceite | Status |
 |----|-----------|--------------------|--------|
-| DEP-01 | Empacotador de deploy | `npm run package` gera `build-deploy/ag_salao.zip` com `index.html`, `assets/`, `.htaccess` e `api/` | ✅ |
-| DEP-02 | Segurança do artefato | O pacote NÃO contém `config.php` (credenciais); contém `config.sample.php` | ✅ (validado) |
-| DEP-03 | Funciona na subpasta `/ag_salao/` | App + API respondem a partir do pacote extraído (base do Vite `/ag_salao/`) | ✅ (E2E no pacote: agendamento OK) |
+| DEP-01 | Empacotador de deploy | `npm run package` gera `build-deploy/ag_salao.zip` com `index.html`, `assets/`, `.htaccess` e `api/`; valida assets JS não vazios, base `/ag_salao/` no `index.html` e exibe tamanho do pacote | ✅ |
+| DEP-02 | Segurança do artefato | O pacote NÃO contém `config.php` (credenciais); contém `config.sample.php`; script falha se `config.php` ainda estiver presente | ✅ (validado) |
+| DEP-03 | Funciona na subpasta `/ag_salao/` | App + API respondem a partir do pacote extraído (base do Vite `/ag_salao/`); empacotador valida referência à base no `index.html` | ✅ (E2E no pacote: agendamento OK) |
 | DEP-04 | Guia de publicação | `docs/DEPLOY_HOSTINGER.md` cobre pacote, banco, `config.php`, MP, e-mail e cron | ✅ |
+| DEP-05 | Instruções pós-empacotamento | Ao concluir, o script orienta extrair em `public_html/`, criar `config.php` e importar `schema.sql` | ✅ |
 
 ## Fases avançadas (pós-MVP) — implementadas
 
@@ -315,9 +332,9 @@ Dois modelos possíveis (referência oficial):
 | MP-03 | Webhook `POST /api/mp/webhook` atualiza status | Notificação `approved` → assinatura `active` | ✅ (estrutura pronta) |
 | MP-04 | Frontend redireciona ao checkout | Se `checkoutUrl` existir, o app redireciona | ✅ |
 
-#### 1b) Checkout Transparente (Orders API) — alvo recomendado (planejado)
+#### 1b) Checkout Transparente (Orders API) — implementado (recomendado)
 
-Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order → processa → trata retorno.
+Fluxo: frontend tokeniza o cartão (MercadoPago.js / Brick) → backend cria a order → processa → trata retorno.
 
 | ID | Requisito | Critério de aceite | Status |
 |----|-----------|--------------------|--------|
@@ -325,7 +342,7 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
 | MP-06 | `POST /api/orders` cria e processa a order (`/v1/orders`, `automatic`) | Retorna `orderId` e `orderStatus`; pagamento aprovado ativa a assinatura | ✅ validado (order `processed`/`accredited`) |
 | MP-07 | Suporte a captura em duas etapas (modo `manual` + `/capture`) | Autorizar e capturar posteriormente | ⏳ pós-MVP |
 | MP-08 | Aprovação ativa a assinatura + webhook | Order aprovada → assinatura `active`; webhook `POST /api/mp/webhook` pronto | ✅ |
-| MP-09 | Reembolso do pagamento pelo admin | Guarda o `order_id` na assinatura; `POST /api/subscriptions/{id}/refund` (admin) chama `/v1/orders/{id}/refund`; assinatura vira `cancelled` | ✅ |
+| MP-09 | Reembolso do pagamento pelo admin | Guarda o `order_id` na assinatura; `POST /api/subscriptions/{id}/refund` (admin) chama `/v1/orders/{id}/refund`; assinatura vira `cancelled`; rejeição imediata do MP exibe mensagem amigável pedindo nova tentativa | ✅ |
 | MP-10 | Fallback seguro | Sem `MP_PUBLIC_KEY`, cai no fluxo de assinatura `pending` sem quebrar | ✅ |
 
 > Credenciais necessárias (Secrets/`config.php`): `MP_ACCESS_TOKEN` (backend) e `MP_PUBLIC_KEY`
@@ -347,13 +364,9 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
 6. Medir a qualidade da integração.
 7. Subir em produção (trocar para credenciais de produção).
 
-**Decisão de modelo (esforço × personalização):**
-- Checkout Transparente (Orders API): máxima personalização, no nosso site — maior esforço (API + MercadoPago.js).
-- Checkout Bricks: componentes prontos do MP, no nosso site — esforço médio (bom equilíbrio).
-- Checkout Pro (redirect): menor esforço, fora do site — **já implementado como fallback**.
-
-> Recomendação: se o objetivo é pagamento no próprio site com menos esforço/risco, avaliar **Bricks**;
-> se a prioridade é personalização total, seguir com **Orders API**. Definir antes do `/build`.
+**Modelos disponíveis (esforço × personalização):**
+- Checkout Transparente (Orders API + Brick de cartão): pagamento no nosso site — **implementado e recomendado**.
+- Checkout Pro (redirect): menor esforço, fora do site — **implementado como fallback** quando só há `MP_ACCESS_TOKEN`.
 
 **Resultado da validação em sandbox (01/08/2026):**
 - Checkout Pro (redirect): ✅ validado — `POST /api/subscriptions` gerou um `init_point` real.
@@ -365,7 +378,8 @@ Fluxo: frontend tokeniza o cartão (MercadoPago.js) → backend cria a order →
 - Observação: o backend usa `MP_ACCESS_TOKEN`; o frontend usa `MP_PUBLIC_KEY` (exposta em `/bootstrap`).
 - Reembolso (MP-09): ✅ validado — `POST /api/subscriptions/{id}/refund` (admin) reembolsa a order e marca
   a assinatura como `cancelled`. Ressalva do sandbox: o MP rejeita reembolso imediato de uma order
-  recém-processada (`Post processing rejected`); após alguns segundos o reembolso é aceito (`refunded`).
+  recém-processada (`Post processing rejected`); a API retorna mensagem amigável e, após alguns segundos,
+  o reembolso é aceito (`refunded`).
 
 ### Fase 2 — E-mail de confirmação
 
