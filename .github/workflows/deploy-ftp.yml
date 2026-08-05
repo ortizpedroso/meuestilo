@@ -28,10 +28,6 @@ jobs:
       - name: Verificar secrets FTP
         run: |
           missing=0
-          for key in FTP_HOST FTP_USER FTP_PASSWORD FTP_SERVER_DIR; do
-            val="${{ secrets[key] }}"
-            # GitHub não permite loop dinâmico em secrets; checamos um a um:
-          done
           if [ -z "${{ secrets.FTP_HOST }}" ]; then echo "::error::Secret FTP_HOST não configurado. Vá em Settings → Secrets → Actions"; missing=1; fi
           if [ -z "${{ secrets.FTP_USER }}" ]; then echo "::error::Secret FTP_USER não configurado"; missing=1; fi
           if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "::error::Secret FTP_PASSWORD não configurado"; missing=1; fi
