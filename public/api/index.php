@@ -177,6 +177,19 @@ function map_appointment(array $r): array
         'remindedAt' => $r['reminded_at'] ?? null,
     ];
 }
+
+/** Dados mínimos para disponibilidade de horários (sem PII do cliente). */
+function map_appointment_slot(array $r): array
+{
+    return [
+        'id' => $r['id'],
+        'date' => $r['date'],
+        'time' => $r['time'],
+        'professionalId' => $r['professional_id'],
+        'serviceDuration' => (int) $r['service_duration'],
+        'status' => $r['status'],
+    ];
+}
 function map_review(array $r): array
 {
     return [
@@ -328,11 +341,14 @@ try {
             break;
         }
 
-        // ---------------- BOOTSTRAP (carrega tudo público de uma vez) ----------------
+        // ---------------- BOOTSTRAP (dados públicos; agendamentos completos só para admin) ----------------
         case 'bootstrap': {
             $services = array_map('map_service', $db->query('SELECT * FROM services ORDER BY sort_order, name')->fetchAll());
             $professionals = array_map('map_professional', $db->query('SELECT * FROM professionals ORDER BY sort_order, name')->fetchAll());
-            $appointments = array_map('map_appointment', $db->query('SELECT * FROM appointments ORDER BY date DESC, time DESC')->fetchAll());
+            $appointmentRows = $db->query('SELECT * FROM appointments ORDER BY date DESC, time DESC')->fetchAll();
+            $appointments = ag_is_admin()
+                ? array_map('map_appointment', $appointmentRows)
+                : array_map('map_appointment_slot', $appointmentRows);
             $reviews = array_map('map_review', $db->query('SELECT * FROM reviews ORDER BY date DESC')->fetchAll());
             $settings = get_settings($db);
             ag_json([
