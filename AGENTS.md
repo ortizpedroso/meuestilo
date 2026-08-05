@@ -9,7 +9,8 @@ sold as a **white-label SaaS**. Two parts:
 - Backend: **PHP + MySQL** REST API in `public/api/` (plain PDO, no framework/composer),
   targeted at Hostinger shared hosting. Schema + seed in `database/schema.sql`.
 
-Deploy target is a subfolder of `public_html`: `public_html/ag_salao/` (Vite `base` is `/ag_salao/`).
+Deploy target for **Meu Stilo (InoveSW)** is `public_html/meuestilo/` (Vite `base` is `/meuestilo/` via `npm run package:meuestilo`).
+For generic white-label builds, default base is `/ag_salao/` (`npm run package`).
 See `docs/DEPLOY_HOSTINGER.md` for the full deploy guide.
 
 Data lives in MySQL (not localStorage). `customers` are **derived** from appointments

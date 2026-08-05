@@ -2,10 +2,12 @@
  * Teste de fumaça contra a instância publicada na Hostinger.
  *
  * Uso:
- *   HOSTINGER_BASE_URL=https://www.inovesw.com.br/ag_salao node scripts/hostinger-smoke.mjs
+ *   npm run smoke:hostinger
+ *   HOSTINGER_BASE_URL=https://inovesw.com.br/meuestilo node scripts/hostinger-smoke.mjs
  *   HOSTINGER_ADMIN_PASSWORD=sua-senha node scripts/hostinger-smoke.mjs
  */
 const BASE = (process.env.HOSTINGER_BASE_URL || 'https://inovesw.com.br/meuestilo').replace(/\/$/, '');
+const BASE_PATH = new URL(BASE).pathname.replace(/\/$/, '') || '';
 const ADMIN_PASS = process.env.HOSTINGER_ADMIN_PASSWORD || '';
 
 const tests = [];
@@ -29,7 +31,7 @@ try {
   const res = await fetch(`${BASE}/`);
   const html = await res.text();
   ok('Landing HTTP 200', res.status === 200, `status ${res.status}`);
-  ok('Landing referencia /ag_salao/', html.includes('/ag_salao/'));
+  ok('Landing referencia base path', BASE_PATH ? html.includes(`${BASE_PATH}/`) : true, BASE_PATH || '(raiz)');
   ok('Landing tem root React', html.includes('id="root"'));
 } catch (e) {
   ok('Landing acessível', false, e.message);

@@ -55,8 +55,8 @@ A Hostinger só faz `git pull` — ela **não roda `npm run build`** no plano co
 Então, para usar Git, escolha uma opção:
 
 - **Commit do build:** rode `npm run build` e comite a pasta `dist/` (não recomendado como padrão).
-- **GitHub Actions:** um workflow builda e envia por FTP só para `public_html/ag_salao/`.
-  (Podemos configurar isso depois, se desejar.)
+- **GitHub Actions:** workflow **Deploy FTP (Hostinger)** envia automaticamente para `public_html/meuestilo/`.
+  Ver [`docs/DEPLOY_FTP.md`](DEPLOY_FTP.md).
 
 Para começar, o **upload de arquivos** (Passos 2–4) é o caminho mais simples e rápido.
 

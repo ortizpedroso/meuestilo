@@ -58,7 +58,7 @@ npm run package:meuestilo   # gera build-deploy/meuestilo.zip
 ## 5. Teste automatizado pós-deploy
 
 ```bash
-HOSTINGER_BASE_URL=https://www.inovesw.com.br/ag_salao \
+HOSTINGER_BASE_URL=https://inovesw.com.br/meuestilo \
 HOSTINGER_ADMIN_PASSWORD=sua-senha-admin \
 node scripts/hostinger-smoke.mjs
 ```

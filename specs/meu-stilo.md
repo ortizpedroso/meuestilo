@@ -17,8 +17,8 @@ a própria marca (nome, logo, cores, contatos).
 
 | Camada | Tecnologia | Observações |
 |--------|-----------|-------------|
-| Frontend | React 19 + TypeScript + Vite 6 + Tailwind CSS 4 | SPA; `base` do Vite = `/ag_salao/` |
-| Backend | PHP 8 (PDO, sem framework) | API REST em `public/api/` (vira `ag_salao/api/`) |
+| Frontend | React 19 + TypeScript + Vite 6 + Tailwind CSS 4 | SPA; produção InoveSW: `base` = `/meuestilo/` (`package:meuestilo`) |
+| Backend | PHP 8 (PDO, sem framework) | API REST em `public/api/` (vira `meuestilo/api/` em produção) |
 | Banco | MySQL / MariaDB | Schema + seed em `database/schema.sql` |
 | Autenticação admin | Token via `POST /api/login` | `Bearer` token = `sha256(admin_password\|auth_secret)` |
 | Ícones/animação | lucide-react, motion | — |
@@ -271,7 +271,7 @@ Persistência real em **MySQL** (não mais `localStorage`).
 
 ### Qualidade Geral
 - [x] Aplicativo funcional sem erros críticos (bug de loop do localStorage eliminado)
-- [x] Pronto para deploy em `public_html/ag_salao/`
+- [x] Pronto para deploy em `public_html/meuestilo/` (InoveSW)
 - [x] Aparência de produto comercial pronto para venda por assinatura
 
 ---
@@ -330,9 +330,9 @@ Guia operacional: [`docs/PRODUCAO.md`](../docs/PRODUCAO.md).
 
 | ID | Requisito | Critério de aceite | Status |
 |----|-----------|--------------------|--------|
-| DEP-01 | Empacotador de deploy | `npm run package` gera `build-deploy/ag_salao.zip` com `index.html`, `assets/`, `.htaccess` e `api/`; valida assets JS não vazios, base `/ag_salao/` no `index.html` e exibe tamanho do pacote | ✅ |
+| DEP-01 | Empacotador de deploy | `npm run package:meuestilo` gera `build-deploy/meuestilo.zip` com `index.html`, `assets/`, `.htaccess` e `api/`; valida assets JS não vazios, base `/meuestilo/` no `index.html` | ✅ |
 | DEP-02 | Segurança do artefato | O pacote NÃO contém `config.php` (credenciais); contém `config.sample.php`; script falha se `config.php` ainda estiver presente | ✅ (validado) |
-| DEP-03 | Funciona na subpasta `/ag_salao/` | App + API respondem a partir do pacote extraído (base do Vite `/ag_salao/`); empacotador valida referência à base no `index.html` | ✅ (E2E no pacote: agendamento OK) |
+| DEP-03 | Funciona na subpasta `/meuestilo/` | App + API respondem a partir do pacote extraído (base do Vite `/meuestilo/`); empacotador valida referência à base no `index.html` | ✅ (E2E + smoke Hostinger) |
 | DEP-04 | Guia de publicação | `docs/DEPLOY_HOSTINGER.md` cobre pacote, banco, `config.php`, MP, e-mail e cron | ✅ |
 | DEP-05 | Instruções pós-empacotamento | Ao concluir, o script orienta extrair em `public_html/`, criar `config.php` e importar `schema.sql` | ✅ |
 | DEP-06 | Checklist de produção | `docs/PRODUCAO.md` lista configuração do operador e testes pós-deploy | ✅ |
@@ -340,35 +340,35 @@ Guia operacional: [`docs/PRODUCAO.md`](../docs/PRODUCAO.md).
 
 ## Validação em hospedagem compartilhada (Hostinger)
 
-Ambiente alvo: **InoveSW** — `https://www.inovesw.com.br/ag_salao/` (subpasta; site raiz intocado).
+Ambiente alvo: **InoveSW** — `https://inovesw.com.br/meuestilo/` (subpasta; site raiz intocado).
 
 | ID | Requisito | Critério de aceite | Status |
 |----|-----------|--------------------|--------|
-| HOST-01 | Pacote gerado | `npm run package` → `build-deploy/ag_salao.zip` sem `config.php` | ✅ |
-| HOST-02 | Upload no hPanel | Zip extraído em `public_html/ag_salao/` com `index.html`, `assets/`, `api/` | ⏳ operador |
-| HOST-03 | Banco MySQL | `schema.sql` importado; `config.php` com credenciais do hPanel | ⏳ operador |
-| HOST-04 | Landing pública | `GET /ag_salao/` retorna 200 com SPA React | ⏳ pós-deploy |
-| HOST-05 | API bootstrap | `GET /ag_salao/api/bootstrap` retorna serviços e settings | ⏳ pós-deploy |
-| HOST-06 | Agendamento E2E | `POST /api/appointments` cria código STILO-XXXX em produção | ⏳ pós-deploy |
-| HOST-07 | Admin login | `POST /api/login` com senha do `config.php` retorna token | ⏳ pós-deploy |
-| HOST-08 | Smoke automatizado | `node scripts/hostinger-smoke.mjs` passa sem falhas | ⏳ pós-deploy |
+| HOST-01 | Pacote gerado | `npm run package:meuestilo` → `build-deploy/meuestilo.zip` sem `config.php` | ✅ |
+| HOST-02 | Upload no hPanel | Zip extraído em `public_html/meuestilo/` com `index.html`, `assets/`, `api/` | ✅ |
+| HOST-03 | Banco MySQL | `schema.sql` importado; `config.php` com credenciais do hPanel | ✅ |
+| HOST-04 | Landing pública | `GET /meuestilo/` retorna 200 com SPA React | ✅ |
+| HOST-05 | API bootstrap | `GET /meuestilo/api/bootstrap` retorna serviços e settings | ✅ |
+| HOST-06 | Agendamento E2E | `POST /api/appointments` cria código STILO-XXXX em produção | ✅ |
+| HOST-07 | Admin login | `POST /api/login` com senha do `config.php` retorna token | ⏳ opcional |
+| HOST-08 | Smoke automatizado | `npm run smoke:hostinger` passa sem falhas | ✅ |
 
 **Comandos de validação (após publicar):**
 
 ```bash
-npm run package
-# upload build-deploy/ag_salao.zip → public_html/ → extrair
+npm run package:meuestilo
+# ou deploy automático via GitHub Actions (push na main)
 
-HOSTINGER_BASE_URL=https://www.inovesw.com.br/ag_salao \
-HOSTINGER_ADMIN_PASSWORD=sua-senha-admin \
-node scripts/hostinger-smoke.mjs
+npm run smoke:hostinger
+# ou com senha admin:
+HOSTINGER_ADMIN_PASSWORD=sua-senha-admin npm run smoke:hostinger
 ```
 
 **`config.php` mínimo para InoveSW:**
 
 ```php
-'allowed_origins' => ['https://www.inovesw.com.br', 'https://inovesw.com.br'],
-'app_base_url' => 'https://www.inovesw.com.br/ag_salao',
+'allowed_origins' => ['https://inovesw.com.br', 'https://www.inovesw.com.br'],
+'app_base_url' => 'https://inovesw.com.br/meuestilo',
 ```
 
 ## Fases avançadas (pós-MVP) — implementadas
