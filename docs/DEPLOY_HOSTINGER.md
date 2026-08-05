@@ -1,6 +1,6 @@
 # Deploy na Hostinger — App em `public_html/ag_salao/`
 
-Guia para publicar o sistema **Ag Salão** numa subpasta do `public_html`, sem afetar o site que já está na raiz (InoveSW). Stack: **React (estático) + API PHP + MySQL**.
+Guia para publicar o sistema **Ag Salão** numa subpasta do `public_html`, sem afetar o site que já está na raiz (InoveSW — `https://www.inovesw.com.br/`). Stack: **React (estático) + API PHP + MySQL**.
 
 ## Visão geral da estrutura publicada
 
@@ -69,13 +69,13 @@ return [
     'db_charset' => 'utf8mb4',
     'admin_password' => 'uma-senha-forte-do-painel',
     'auth_secret' => 'uma-string-aleatoria-bem-longa',
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['https://www.inovesw.com.br', 'https://inovesw.com.br'],
 
     // Fase 1 - Mercado Pago (opcional; sem credenciais, a contratação fica "pending")
     'mp_access_token' => 'SEU_ACCESS_TOKEN_MP',   // backend (Checkout Pro e Transparente)
     'mp_public_key' => 'SUA_PUBLIC_KEY_MP',        // frontend (MercadoPago.js / Checkout Transparente)
     'mp_webhook_secret' => 'SEU_WEBHOOK_SECRET',   // valida x-signature do webhook
-    'app_base_url' => 'https://seudominio.com/ag_salao',
+    'app_base_url' => 'https://www.inovesw.com.br/ag_salao',
 
     // Fase 2 - E-mail de confirmação
     'mail_enabled' => true,
@@ -90,7 +90,7 @@ return [
 
 ## Passo 5 — Testar
 
-- Acesse `https://seudominio.com/ag_salao/` → a landing deve carregar.
+- Acesse `https://www.inovesw.com.br/ag_salao/` → a landing deve carregar.
 - Faça um agendamento de teste (deve gerar um código STILO-xxxx).
 - Acesse **Admin** no topo, entre com a `admin_password` do `config.php` e confira o painel.
 - Em **Marca (White-label)**, personalize nome, logo, contatos e a cor de destaque.
