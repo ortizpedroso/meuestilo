@@ -8,13 +8,15 @@ interface ReviewsSectionProps {
   averageRating: number;
   totalReviews: number;
   onAddReview: (review: Omit<Review, 'id' | 'date'>) => Promise<void> | void;
+  onError?: (message: string) => void;
 }
 
 export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
   reviews,
   averageRating,
   totalReviews,
-  onAddReview
+  onAddReview,
+  onError
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clientName, setClientName] = useState('');
@@ -36,7 +38,7 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
         verifiedBooking: true
       });
     } catch (err) {
-      alert('Não foi possível enviar a avaliação: ' + (err instanceof Error ? err.message : 'erro'));
+      onError?.('Não foi possível enviar a avaliação: ' + (err instanceof Error ? err.message : 'erro'));
       return;
     }
 

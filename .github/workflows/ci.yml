@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'cursor/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run lint
+
+      - name: Package deploy artifact
+        run: npm run package
+
+      - name: Verify package contents
+        run: |
+          test -f build-deploy/ag_salao.zip
+          test ! -f build-deploy/ag_salao/api/config.php
+          test -f build-deploy/ag_salao/api/security.php
+          test -f build-deploy/ag_salao/api/data/.htaccess

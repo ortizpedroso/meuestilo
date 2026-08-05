@@ -45,7 +45,7 @@ if (fs.existsSync(localConfig)) {
 }
 
 // Validações essenciais
-const required = ['index.html', 'assets', '.htaccess', 'api/index.php', 'api/db.php', 'api/.htaccess', 'api/config.sample.php'];
+const required = ['index.html', 'assets', '.htaccess', 'robots.txt', 'api/index.php', 'api/db.php', 'api/security.php', 'api/.htaccess', 'api/config.sample.php', 'api/data/.htaccess'];
 for (const rel of required) {
   if (!fs.existsSync(path.join(appDir, rel))) fail(`arquivo essencial ausente no pacote: ${rel}`);
 }

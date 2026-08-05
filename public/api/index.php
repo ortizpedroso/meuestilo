@@ -6,6 +6,7 @@
 
 require __DIR__ . '/db.php';
 require __DIR__ . '/mailer.php';
+require __DIR__ . '/security.php';
 
 ag_cors();
 
@@ -309,11 +310,20 @@ try {
         // ---------------- LOGIN ----------------
         case 'login': {
             if ($method !== 'POST') ag_json(['error' => 'Método não permitido.'], 405);
+            $maxAttempts = (int) ag_setting('login_rate_limit_max', 5);
+            $window = (int) ag_setting('login_rate_limit_window', 900);
+            $rlKey = 'login:' . ag_client_ip();
+            $wait = ag_rate_limit_check($rlKey, $maxAttempts, $window);
+            if ($wait > 0) {
+                ag_json(['error' => 'Muitas tentativas. Aguarde ' . ceil($wait / 60) . ' minuto(s) e tente novamente.'], 429);
+            }
             $body = ag_body();
             $c = ag_config();
             if (($body['password'] ?? null) !== null && hash_equals((string) $c['admin_password'], (string) $body['password'])) {
+                ag_rate_limit_clear($rlKey);
                 ag_json(['token' => ag_expected_token()]);
             }
+            ag_rate_limit_hit($rlKey, $window);
             ag_json(['error' => 'Senha incorreta.'], 401);
             break;
         }
@@ -685,6 +695,9 @@ try {
             // /api/mp/webhook
             if (($segments[1] ?? '') !== 'webhook') {
                 ag_json(['error' => 'Recurso não encontrado.'], 404);
+            }
+            if (!ag_mp_verify_webhook_signature()) {
+                ag_json(['error' => 'Assinatura do webhook inválida.'], 401);
             }
             $token = ag_setting('mp_access_token', '');
             $body = ag_body();

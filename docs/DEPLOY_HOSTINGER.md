@@ -74,6 +74,7 @@ return [
     // Fase 1 - Mercado Pago (opcional; sem credenciais, a contratação fica "pending")
     'mp_access_token' => 'SEU_ACCESS_TOKEN_MP',   // backend (Checkout Pro e Transparente)
     'mp_public_key' => 'SUA_PUBLIC_KEY_MP',        // frontend (MercadoPago.js / Checkout Transparente)
+    'mp_webhook_secret' => 'SEU_WEBHOOK_SECRET',   // valida x-signature do webhook
     'app_base_url' => 'https://seudominio.com/ag_salao',
 
     // Fase 2 - E-mail de confirmação
@@ -95,6 +96,8 @@ return [
 - Em **Marca (White-label)**, personalize nome, logo, contatos e a cor de destaque.
 
 Ative o **SSL grátis** no hPanel para o site rodar em `https`.
+
+> Checklist completo de go-live: [`docs/PRODUCAO.md`](PRODUCAO.md).
 
 ---
 

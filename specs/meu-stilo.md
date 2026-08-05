@@ -106,6 +106,7 @@ Progressiva Orgânica, Barba com Toalha Quente, Manicure Completa, Pedicure Comp
 | AD-11 | Concluir atendimento | ✅ |
 | AD-12 | Base de clientes (histórico e total gasto) | ✅ (derivada) |
 | AD-13 | Dashboard com métricas de faturamento | ✅ |
+| AD-14 | Exportar agendamentos (CSV) | ✅ |
 
 ### 6. White-label (Marca)
 
@@ -262,6 +263,14 @@ Persistência real em **MySQL** (não mais `localStorage`).
 - [x] Validação reforçada no backend (IMP-02)
 - [x] Autoatendimento do cliente — consultar/cancelar por código + telefone (IMP-03)
 
+### Produção e hardening
+- [x] Rate limiting no login admin (PROD-01)
+- [x] Webhook MP com validação de assinatura (PROD-02)
+- [x] CSP e cabeçalhos de segurança (PROD-03)
+- [x] LGPD: banner + política de privacidade (PROD-04)
+- [x] Toasts, export CSV, SEO dinâmico, CI (PROD-05..09)
+- [x] Checklist em `docs/PRODUCAO.md` (PROD-10)
+
 ### Qualidade Geral
 - [x] Aplicativo funcional sem erros críticos (bug de loop do localStorage eliminado)
 - [x] Pronto para deploy em `public_html/ag_salao/`
@@ -280,10 +289,26 @@ Persistência real em **MySQL** (não mais `localStorage`).
 ### Sugestões para próximas iterações (não construídas)
 - Confirmação em duas etapas do agendamento (ex.: OTP por WhatsApp/e-mail).
 - Bloqueio/feriados e folgas pontuais por profissional no admin.
-- Notificação/toast em vez de `alert()` para erros de salvamento.
-- Exportar agendamentos/relatórios (CSV) no admin.
-- CSP (Content-Security-Policy) ajustada para fontes/imagens externas.
-- Rate limiting no login do admin (anti brute force).
+- Pix/boleto no checkout de assinatura SaaS.
+- Monitoramento de erros (ex.: Sentry).
+- Backup automatizado do MySQL.
+
+## Produção e hardening (ciclo concluído)
+
+| ID | Requisito | Critério de aceite | Status |
+|----|-----------|--------------------|--------|
+| PROD-01 | Rate limiting no login admin | Após N tentativas falhas, `POST /api/login` retorna 429 com mensagem de espera | ✅ |
+| PROD-02 | Validação do webhook Mercado Pago | Com `mp_webhook_secret`, rejeita `POST /api/mp/webhook` sem assinatura `x-signature` válida | ✅ |
+| PROD-03 | Content-Security-Policy | `.htaccess` do app define CSP permitindo self, Google Fonts e SDK MP | ✅ |
+| PROD-04 | LGPD / privacidade | Banner de consentimento + modal de política de privacidade no rodapé | ✅ |
+| PROD-05 | Toasts em vez de `alert()` | Erros de salvamento, reembolso e avaliação usam notificações toast | ✅ |
+| PROD-06 | Exportar agendamentos (CSV) | Botão "Exportar CSV" na aba Agendamentos do admin | ✅ |
+| PROD-07 | CORS restrito por padrão | `config.sample.php` recomenda domínio específico (não `*`) | ✅ |
+| PROD-08 | SEO dinâmico (white-label) | `SeoHead` atualiza título, meta e JSON-LD conforme `settings` | ✅ |
+| PROD-09 | CI automatizado | GitHub Actions roda `npm run lint` e `npm run package` | ✅ |
+| PROD-10 | Checklist de produção | `docs/PRODUCAO.md` documenta go-live e pendências do operador | ✅ |
+
+Guia operacional: [`docs/PRODUCAO.md`](../docs/PRODUCAO.md).
 
 ## Qualidade: UI/UX, SEO e Segurança
 
@@ -291,11 +316,17 @@ Persistência real em **MySQL** (não mais `localStorage`).
 |----|-----------|--------------------|--------|
 | Q-SEO-01 | `index.html` com idioma, título e descrição adequados | `lang="pt-BR"`, `<title>` descritivo e `meta description` presentes | ✅ |
 | Q-SEO-02 | Metadados sociais e favicon | Open Graph (title/description/locale) e favicon (sem 404) | ✅ |
+| Q-SEO-03 | SEO dinâmico por salão | Título, descrição e JSON-LD `BeautySalon` atualizados em runtime | ✅ |
 | Q-UX-01 | Acessibilidade dos principais controles | Botões de ícone (header e "fechar" dos modais) com `aria-label`; imagens com `alt` | ✅ |
 | Q-UX-02 | Estados de carregamento e erro | Tela de "carregando" e tela de erro com "tentar novamente" na inicialização | ✅ |
+| Q-UX-03 | Navegação acessível | Link "Ir para o conteúdo principal" (skip link) + `main#conteudo-principal` | ✅ |
+| Q-UX-04 | Feedback não intrusivo | Toasts para erros de salvamento/reembolso/avaliação (sem `alert()`) | ✅ |
+| Q-LGPD-01 | Consentimento e política | Banner na 1ª visita + modal "Privacidade (LGPD)" no rodapé | ✅ |
 | Q-SEC-01 | API não vaza detalhes internos | Erros 500 não retornam stack/mensagem interna (exceto com `debug` ligado) | ✅ |
-| Q-SEC-02 | Cabeçalhos de segurança | `.htaccess` define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` (e `Permissions-Policy` no app) | ✅ |
+| Q-SEC-02 | Cabeçalhos de segurança | `.htaccess` define CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` | ✅ |
 | Q-SEC-03 | Proteção de dados e injeção | Consultas via PDO prepared statements; `config.php` inacessível via web; CORS configurável | ✅ |
+| Q-SEC-04 | Anti brute force no login | Rate limit configurável (`login_rate_limit_max` / `login_rate_limit_window`) | ✅ |
+| Q-SEC-05 | Webhook MP autenticado | Validação HMAC do header `x-signature` com `mp_webhook_secret` | ✅ |
 
 ## Deploy / Produção
 
@@ -306,6 +337,7 @@ Persistência real em **MySQL** (não mais `localStorage`).
 | DEP-03 | Funciona na subpasta `/ag_salao/` | App + API respondem a partir do pacote extraído (base do Vite `/ag_salao/`); empacotador valida referência à base no `index.html` | ✅ (E2E no pacote: agendamento OK) |
 | DEP-04 | Guia de publicação | `docs/DEPLOY_HOSTINGER.md` cobre pacote, banco, `config.php`, MP, e-mail e cron | ✅ |
 | DEP-05 | Instruções pós-empacotamento | Ao concluir, o script orienta extrair em `public_html/`, criar `config.php` e importar `schema.sql` | ✅ |
+| DEP-06 | Checklist de produção | `docs/PRODUCAO.md` lista configuração do operador e testes pós-deploy | ✅ |
 
 ## Fases avançadas (pós-MVP) — implementadas
 

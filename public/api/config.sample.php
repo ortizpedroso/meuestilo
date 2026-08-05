@@ -23,9 +23,9 @@ return [
     // Gere uma string aleatória longa e única.
     'auth_secret' => 'troque-por-uma-string-aleatoria-longa',
 
-    // Domínios liberados para chamar a API (CORS). Use ['*'] para liberar geral
-    // ou informe seu domínio, ex: ['https://seudominio.com'].
-    'allowed_origins' => ['*'],
+    // Domínios liberados para chamar a API (CORS).
+    // Em produção, restrinja ao seu domínio: ['https://seudominio.com']
+    'allowed_origins' => ['https://seudominio.com'],
 
     // ---------- Fase 1: Mercado Pago ----------
     // Access Token do Mercado Pago (backend). Sem ele, a contratação apenas registra
@@ -35,6 +35,12 @@ return [
     'mp_public_key' => '',
     // URL base pública do app (para back_urls/webhook do MP). Ex.: https://seudominio.com/ag_salao
     'app_base_url' => '',
+    // Secret do webhook (painel MP → Suas integrações → Webhooks). Valida header x-signature.
+    'mp_webhook_secret' => '',
+
+    // Rate limit do login admin (tentativas / janela em segundos)
+    'login_rate_limit_max' => 5,
+    'login_rate_limit_window' => 900,
 
     // ---------- Fase 2: E-mail ----------
     'mail_enabled' => false,               // liga o envio real via mail() do PHP

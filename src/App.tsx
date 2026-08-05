@@ -26,8 +26,12 @@ import { AdminPanel } from './components/AdminPanel';
 import { MyAppointmentModal } from './components/MyAppointmentModal';
 import { Footer } from './components/Footer';
 import { Loader2, AlertTriangle } from 'lucide-react';
+import { useToast } from './components/Toast';
+import { PrivacyModal, PrivacyBanner } from './components/PrivacyModal';
+import { SeoHead } from './components/SeoHead';
 
 export default function App() {
+  const { showToast } = useToast();
   // Dados vindos da API
   const [services, setServices] = useState<Service[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
@@ -56,6 +60,7 @@ export default function App() {
   const [isMyApptOpen, setIsMyApptOpen] = useState(false);
   const [isEmailOpen, setIsEmailOpen] = useState(false);
   const [appointmentForEmail, setAppointmentForEmail] = useState<Appointment | null>(null);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   // Carrega dados iniciais da API
   const loadData = async () => {
@@ -149,7 +154,7 @@ export default function App() {
     try {
       await fn();
     } catch (err) {
-      alert('Não foi possível salvar: ' + (err instanceof Error ? err.message : 'erro'));
+      showToast('Não foi possível salvar: ' + (err instanceof Error ? err.message : 'erro'), 'error');
       rollback();
     }
   };
@@ -199,7 +204,7 @@ export default function App() {
       const res = await api.refundSubscription(id);
       setSubscriptions((prev) => prev.map((s) => (s.id === id ? res.subscription : s)));
     } catch (err) {
-      alert('Falha ao reembolsar: ' + (err instanceof Error ? err.message : 'erro'));
+      showToast('Falha ao reembolsar: ' + (err instanceof Error ? err.message : 'erro'), 'error');
     }
   };
 
@@ -235,6 +240,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F9F7F5] text-slate-900 font-sans antialiased flex flex-col selection:bg-amber-500 selection:text-slate-900">
+      <a
+        href="#conteudo-principal"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[300] focus:px-4 focus:py-2 focus:bg-amber-600 focus:text-white focus:rounded-lg focus:font-bold"
+      >
+        Ir para o conteúdo principal
+      </a>
+      <SeoHead settings={settings} />
       <Header
         settings={settings}
         averageRating={averageRating}
@@ -245,7 +257,7 @@ export default function App() {
         isAdminLoggedIn={isAdminLoggedIn}
       />
 
-      <main className="flex-1">
+      <main id="conteudo-principal" className="flex-1">
         <Hero
           settings={settings}
           averageRating={averageRating}
@@ -266,6 +278,7 @@ export default function App() {
           averageRating={averageRating}
           totalReviews={reviews.length}
           onAddReview={handleAddReview}
+          onError={(msg) => showToast(msg, 'error')}
         />
 
         <PlansSection settings={settings} mpPublicKey={mpPublicKey} onSubscribed={handleSubscribed} />
@@ -277,7 +290,11 @@ export default function App() {
         onOpenAdmin={handleOpenAdminToggle}
         onOpenShare={() => setIsShareOpen(true)}
         onOpenMyAppointment={() => setIsMyApptOpen(true)}
+        onOpenPrivacy={() => setIsPrivacyOpen(true)}
       />
+
+      <PrivacyBanner onOpenPrivacy={() => setIsPrivacyOpen(true)} />
+      <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} settings={settings} />
 
       <BookingFlow
         isOpen={isBookingOpen}

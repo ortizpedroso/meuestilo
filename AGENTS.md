@@ -47,5 +47,9 @@ The frontend calls the API at `import.meta.env.BASE_URL + 'api'` (i.e. `/ag_sala
 - Admin writes for services/professionals/appointments use **bulk replace** (`PUT` replaces the whole
   table). Public booking uses `POST /api/appointments` (append). Fine for a single-salon MVP.
 - The Vite build prints a harmless PostCSS `@import` (Google Fonts) warning; it does not fail the build.
-- Mercado Pago is not wired yet: `POST /api/subscriptions` records a `pending` subscription and returns
-  `checkoutUrl: null`; the frontend already redirects when a `checkoutUrl` is present (integration hook).
+- Mercado Pago integrado: Checkout Pro (`POST /api/subscriptions`) e Checkout Transparente com cartão
+  (`POST /api/orders`). Sem credenciais, a assinatura fica `pending` (fallback seguro). Configure
+  `mp_access_token`, `mp_public_key`, `mp_webhook_secret` e `app_base_url` em `config.php`.
+- Login admin tem rate limiting (`login_rate_limit_max` / `login_rate_limit_window` em `config.php`).
+- Para desenvolvimento local, use `allowed_origins => ['*']` ou inclua `http://localhost:8080` no array.
+- Checklist de go-live: `docs/PRODUCAO.md`.

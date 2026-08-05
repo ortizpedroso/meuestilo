@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: /ag_salao/sitemap.xml

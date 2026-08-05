@@ -37,8 +37,10 @@ import {
   Sparkles,
   ShieldCheck,
   Palette,
-  Save
+  Save,
+  Download
 } from 'lucide-react';
+import { downloadAppointmentsCsv } from '../utils/exportCsv';
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -466,6 +468,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <option value="completed">Concluídos</option>
                     <option value="cancelled">Cancelados</option>
                   </select>
+
+                  <button
+                    type="button"
+                    onClick={() => downloadAppointmentsCsv(filteredAppointments, settings.name)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs text-white font-semibold border border-zinc-700 transition-colors"
+                    aria-label="Exportar agendamentos em CSV"
+                  >
+                    <Download className="w-3.5 h-3.5" aria-hidden />
+                    <span>Exportar CSV</span>
+                  </button>
                 </div>
 
                 {/* Appointments List */}

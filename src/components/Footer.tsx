@@ -8,6 +8,7 @@ interface FooterProps {
   onOpenAdmin: () => void;
   onOpenShare: () => void;
   onOpenMyAppointment: () => void;
+  onOpenPrivacy: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -15,7 +16,8 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenBooking,
   onOpenAdmin,
   onOpenShare,
-  onOpenMyAppointment
+  onOpenMyAppointment,
+  onOpenPrivacy
 }) => {
   return (
     <footer className="bg-white text-slate-600 border-t border-slate-200 pt-16 pb-12">
@@ -90,9 +92,14 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Copyright */}
         <div className="pt-8 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>© {new Date().getFullYear()} {settings.name}. Todos os direitos reservados.</p>
-          <div className="flex items-center space-x-2 text-[11px]">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-            <span className="text-emerald-600 font-bold">Sistema Online</span>
+          <div className="flex items-center gap-4 text-[11px]">
+            <button type="button" onClick={onOpenPrivacy} className="hover:text-amber-700 underline">
+              Privacidade (LGPD)
+            </button>
+            <span className="flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" aria-hidden />
+              <span className="text-emerald-600 font-bold">Sistema Online</span>
+            </span>
           </div>
         </div>
 
