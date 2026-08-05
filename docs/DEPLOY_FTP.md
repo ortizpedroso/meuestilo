@@ -36,16 +36,21 @@ Se tiver dúvida, comece com `/public_html/meuestilo/`.
 
 ## 2. Cadastrar secrets no GitHub
 
-1. Abra: **https://github.com/ortizpedroso/meuestilo/settings/secrets/actions**
-2. Clique em **New repository secret** para cada um:
+> **Erro `Input required and not supplied: server`?**  
+> Significa que o secret **`FTP_HOST`** (e provavelmente os outros) **não foi cadastrado** ainda.
 
-| Nome do secret | Valor |
-|----------------|-------|
-| `FTP_HOST` | Host FTP do hPanel |
-| `FTP_USER` | Usuário FTP |
-| `FTP_PASSWORD` | Senha FTP |
-| `FTP_PORT` | `21` |
-| `FTP_SERVER_DIR` | `/public_html/meuestilo/` (ou o caminho correto) |
+1. Abra: **https://github.com/ortizpedroso/meuestilo/settings/secrets/actions**
+2. Clique em **New repository secret** — crie **os 5** abaixo (nomes **exatos**, maiúsculas):
+
+| Nome do secret | Valor | Obrigatório |
+|----------------|-------|-------------|
+| `FTP_HOST` | Host FTP do hPanel (ex.: `ftp.inovesw.com.br`) | ✅ |
+| `FTP_USER` | Usuário FTP | ✅ |
+| `FTP_PASSWORD` | Senha FTP | ✅ |
+| `FTP_PORT` | `21` | recomendado |
+| `FTP_SERVER_DIR` | `/public_html/meuestilo/` | ✅ |
+
+⚠️ O nome tem que ser **exatamente** `FTP_HOST` (não `FTP_SERVER` nem `HOST`).
 
 ---
 

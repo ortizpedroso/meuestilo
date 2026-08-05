@@ -25,13 +25,27 @@ jobs:
           npm ci
           npm run package:meuestilo
 
+      - name: Verificar secrets FTP
+        run: |
+          missing=0
+          for key in FTP_HOST FTP_USER FTP_PASSWORD FTP_SERVER_DIR; do
+            val="${{ secrets[key] }}"
+            # GitHub não permite loop dinâmico em secrets; checamos um a um:
+          done
+          if [ -z "${{ secrets.FTP_HOST }}" ]; then echo "::error::Secret FTP_HOST não configurado. Vá em Settings → Secrets → Actions"; missing=1; fi
+          if [ -z "${{ secrets.FTP_USER }}" ]; then echo "::error::Secret FTP_USER não configurado"; missing=1; fi
+          if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then echo "::error::Secret FTP_PASSWORD não configurado"; missing=1; fi
+          if [ -z "${{ secrets.FTP_SERVER_DIR }}" ]; then echo "::error::Secret FTP_SERVER_DIR não configurado (ex: /public_html/meuestilo/)"; missing=1; fi
+          if [ "$missing" -eq 1 ]; then exit 1; fi
+          echo "Secrets FTP: OK"
+
       - name: Enviar para Hostinger (FTP)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }}
+          port: ${{ secrets.FTP_PORT || 21 }}
           protocol: ftp
           local-dir: build-deploy/meuestilo/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
